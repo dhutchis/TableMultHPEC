@@ -20,10 +20,10 @@ Sparse arithmetic is impossible without these conditions, since in that case zer
 In Accumulo, zero elements are entries that do not exist in a table. Entries that actually contain the value zero may exist
 from an operation producing a zero value (such as summing partial products 5, -3 and -2).  
 We currently deliver no special treatment to these entries and plan on adding
-an optional feature that that removes them when encountered.
+an optional feature that removes them when encountered.
 
 There are two general patterns for performing matrix multiplication: inner product and outer product.
-We study each one in terms of how it implements the $\otimes$ component of matrix multiplication,
+We study each in terms of how it implements the $\otimes$ component of matrix multiplication,
 deferring the $\oplus$ operation to run on output generated from applying $\otimes$.
 In the pseudocode, `:' stands for ``all positions'' in the spirit of Matlab notation.
 
@@ -41,17 +41,17 @@ where the operation $\cdot$ is inner (also called dot) product, which we may unf
 &\quad\quad\quad\emit A_{nm} \otimes B_{mp} 
 \end{align*}
 
-Inner product has an advantage of generating output ``in order,'' meaning that all the partial products needed 
+Inner product has an advantage of generating output ``in order,'' meaning that all partial products needed 
 to compute a particular element $C_{np}$ are generated consecutively by the third-level for loop.
 We may apply the $\oplus$ operation immediately after each third-level for loop and obtain an element in the result matrix.
-In Accumulo terms, this means that inner product is easy to ``pre-sum,'' a term for applying a combiner iterator operation
-locally before sending an entry to a remote but globally-aware table combiner.
+This means that inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
+locally before sending entries to a remote but globally-aware table combiner.
 % move to another section?
+%Inner product also generates output ``in order'' in a second sense: 
+It is also adventageous that inner product generates entries sorted by row 
+and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
-Inner product also generates output ``in order'' in a second sense: the algorithm generates entries ordered by row 
-and then by column.  This is important in Accumulo iterator settings where iterators must generate entries in sorted order.
-
-Despite its order-preserving advantages, we chose not to implement inner product because of a serious disadvantage:
+Despite its order-preserving advantages, we chose not to implement inner product because 
 it requires multiple passes over input matrix B. This is because the second-level for loop, which runs over all the columns of
 matrix B, must run for each row of matrix A (first-level for loop).
 Performance measurements proved this a major bottleneck since, in the case of Accumulo
@@ -75,8 +75,8 @@ This is due to moving the n and p for loops, both responsible for determining pa
 below the top-level m for loop.
 
 On the other hand, outer product only requires a single pass over both input matrices.
-This is because the top-level m for loop fixes a dimension of both matrix A and B 
-Once we finish processing a full column of A and row of B, that column and row are finished;
+This is because the top-level m for loop fixes a dimension of both matrix A and B.
+Once we finish processing a full column of A and row of B, the column and row are finished;
 there is no need to read them again (i.e., we never need to restart the top-level for loop).
 
 We may speed the outer product algorithm by storing rows of table B in memory,
@@ -85,7 +85,7 @@ which eliminates the need to re-read rows of B for each run of the third-level f
 In the case of Accumulo, we can even eliminate the need to hold a row in memory by using
 deepCopy SKVI methods to store ``pointers'' to the beginning of the current row m of table B.
 However, this strategy may come at the cost of extra disk seeks, and so
-we leave this testing strategy as a future feature, for now storing the current row of table B in memory.
+we leave testing its performance to future work, for now storing the current row of table B in memory.
 
 Since m is the second dimension of matrix A, we implemented SpGEMM to operate on the transpose AT of input table A.
 

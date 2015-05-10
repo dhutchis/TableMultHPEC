@@ -74,7 +74,7 @@ database-side computation.
 \subsection{Accumulo Iterators}
 Accumulo includes a mechanism to perform limited serer-side computation called the 
 \emph{iterator stack}.  Iterators inside the iterator stack are objects of classes
-that implement the \texttt{SortedKeyValueIterator<Key,Value>} (SKVI) interface, an interface
+that implement the \texttt{SortedKeyValueIterator} (SKVI) interface, an interface
 reminiscent of but more complex than built-in Java iterators from the \texttt{java.lang} package
 in that they have methods to return a current entry (\texttt{getTopKey} and \texttt{getTopValue})
 and proceed to the next entry (\texttt{next}) until no more entries remain (\texttt{hasTop}).

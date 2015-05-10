@@ -13,7 +13,29 @@ This leaves open the chance that a major compaction thread would block on a mino
 in order for the BatchWriter to write entries, while in turn the minor compaction thread blocks on 
 the major compaction since major compactions take a higher thread pool priority than minor ones.
 
-\todo[inline]{temporary tables}
+%\todo[inline]{temporary tables}
+One frequent computaional pattern is to create intermediary tables in the middle of an algorithm 
+that are not needed once the algorithm completes.  For example, we may have a series of TableMult operations 
+for which only the final TableMult is needed as output.  It is therefore wasteful to write the intermediary
+TableMult results to disk if we have room to store them in memory.
+Sometimes one can restructure an algorithm to minimize the use of intermediary tables,
+but a better solution would be to realize a notion of in-memory ``temporary tables'' in Accumulo.
+We leave constructing this notion to future work.
+
+Similarly, it is also useful to \emph{pipeline} TableMults in an algorithm by starting the process 
+that acts on the result of a TableMult before the TableMult finishes.
+Unfortunately, the outer product algorithm cannot guarantee that all partial products for a particular element 
+are written to the result table before the algorithm finishes, since it writes results in chaotic order.
+The inner product algorithm would be easier to pipeline.
+We therefore treat TableMult operations as barriers for operations acting on a TableMult's result.
+
+
+We implemented TableMult logic inside three separate iterators connected via the SortedKeyValueIterator
+interface. One technique for increasing performance is \emph{loop fusion}, combining separate components into one
+that performs everything in one pass.  We chose to keep our iterators separate because it opens them 
+to reuse in other server-side operations and the iterator's processing (including necessary decoding and encoding)
+is not our bottleneck. We will be bound by BatchWrite time no matter how well we optimize the iterator processing.
+
 
 \section{Related Work} %Analogy to MapReduce with Accumulo Scanners, Iterators and BatchWriters:
 Our outer product method could also have been implemented in MapReduce \cite{x} or its successor YARN \cite{x}.
@@ -38,6 +60,15 @@ It would be interesting to directly compare a MapReduce implementation in the fu
 \todo[inline]{Cannon's algorithm, other SpGEMM}
 
 \todo[inline]{Stored Procedures a la MySQL}
+
+% Talk about how we measured performance?
+To measure performance, we used techniques similar to those from Google Dapper \cite{x}.
+We instrument sections of code inside try-finally statements, recording the start time before 
+entering those sections and ensuring we record stop times inside the finally portion.
+We store total time spent inside these code section ``spans'' inside thread-local storage,
+along with statistics on how many times we enter a span and the minimum and maximum amount of time
+spent inside a span. These statistics showed us what code was being traversed more often than expected
+and what portions of code took the longest. 
 
 \section{Conclusions}
 \label{sConclusions}
