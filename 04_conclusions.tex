@@ -1,0 +1,44 @@
+%!TEX root =SpGEMM_Accumulo_HPEC.tex
+
+\section{Discussion}
+\label{sDiscussion}
+
+Our initial design operated the iterator stack on a full major compaction.
+We chose to operate the iterator stack on a scan instead because major compactions experience
+a delay on the order of seconds before Accumulo schedules them, slightly bumping latency,
+and because opening a BatchWriter inside an iterator at major compaction presents a small chance for deadlock.
+Deadlock may occur if the major compaction iterators triggered enough minor compactions 
+such that they exhaust every thread in the compaction thread pool.
+This leaves open the chance that a major compaction thread would block on a minor compaction thread
+in order for the BatchWriter to write entries, while in turn the minor compaction thread blocks on 
+the major compaction since major compactions take a higher thread pool priority than minor ones.
+
+\todo[inline]{temporary tables}
+
+\section{Related Work} %Analogy to MapReduce with Accumulo Scanners, Iterators and BatchWriters:
+Our outer product method could also have been implemented in MapReduce \cite{x} or its successor YARN \cite{x}.
+In fact, there is a natural analogy from
+how we process data using Accumulo infrastructure to methods in MapReduce.
+
+In the map phase, we map matching rows of the input tables to a list
+of partial products generated from their outer product.
+We realize the map phase in Accumulo via the Scanners and the TwoTableIterator.
+In the shuffle phase, we send partial products to the correct tablet of the result
+table via machinery in the Accumulo BatchWriter (using data in the metadata table).
+In the reduce phase, partial products are lazily combined by Accumulo combiners 
+that implement the $\oplus$ operation.
+
+We have a hunch that a MapReduce implementation using the AccumuloInputFormat and AccumuloOutputFormat 
+will outperform our implementation in terms of throughput for large input tables (i.e. whole-table analytics)
+but not latency for moderate input tables (i.e. queued analytics), due to spinup delay MapReduce jobs experience.
+In either case, using MapReduce requires features in Hadoop clusters outside the 
+Accumulo ecosystem, which may not be an option for some user environments.
+It would be interesting to directly compare a MapReduce implementation in the future.
+
+\todo[inline]{Cannon's algorithm, other SpGEMM}
+
+\todo[inline]{Stored Procedures a la MySQL}
+
+\section{Conclusions}
+\label{sConclusions}
+

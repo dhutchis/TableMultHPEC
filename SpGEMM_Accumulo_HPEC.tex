@@ -1,0 +1,232 @@
+
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{tikz}
+\usepackage{footnote}
+\usepackage{balance}
+
+%\ifCLASSINFOpdf
+%  \usepackage[pdftex]{graphicx}
+%\else
+%  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
+%  % will default to the driver specified in the system graphics.cfg if no
+%  % driver is specified.
+%  \usepackage[dvips]{graphicx}
+%\fi
+%declare the path(s) where your graphic files are
+\graphicspath{{./img/}}
+%and their extensions so you won't have to specify these with
+% every instance of \includegraphics
+\DeclareGraphicsExtensions{.eps,.pdf,.png}
+\usepackage[cmex10]{amsmath}
+\hyphenation{op-tical net-works semi-conduc-tor linear}
+
+% todo notes:
+\usepackage{todonotes}
+
+% to fix the figure* environment:
+\usepackage{dblfloatfix}
+\usepackage{fixltx2e}
+
+% for multi-figures:
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+%\usepackage[]{algorithm2e}
+%\usepackage{amsmath}
+\usepackage{amsfonts} % for \mathbb{R}
+%\usepackage[margin=1.15in]{geometry}
+%\usepackage{units} %\nicefrac
+\usepackage{authblk}
+
+
+\DeclareMathOperator{\fore}{foreach}
+\DeclareMathOperator{\emit}{emit}
+
+
+
+\begin{document}
+
+\title{Matrix Multiply in Accumulo}
+
+
+%% \author{
+%% \IEEEauthorblockN{Dylan Hutchison, Vijay Gadepally, Jeremy Kepner, Adam Fuchs }
+%% \IEEEauthorblockA{MIT Computer Science and Artificial Intelligence Laboratory\\
+%% Cambridge, MA 02420\\
+%% \{vijayg, kepner, bamiller\}@ll.mit.edu}}
+
+\author[*]{Dylan Hutchison\thanks{dhutchis@mit.edu}}
+\author[*]{Jeremy Kepner\thanks{kepner@csail.mit.edu}}
+\author[*]{Vijay Gadepally\thanks{vijayg@csail.mit.edu}}
+\author[$\dagger$]{Adam Fuchs\thanks{adam@sqrrl.com}}
+\affil[*]{MIT Lincoln Laboratory}
+\affil[$\dagger$]{Sqrrl}
+
+\renewcommand\Authands{, }
+
+% for over three affiliations, or if they all won't fit within the width
+% of the page, use this alternative format:
+%
+%\author{\IEEEauthorblockN{Michael Shell\IEEEauthorrefmark{1},
+%Homer Simpson\IEEEauthorrefmark{2},
+%James Kirk\IEEEauthorrefmark{3},
+%Montgomery Scott\IEEEauthorrefmark{3} and
+%Eldon Tyrell\IEEEauthorrefmark{4}}
+%\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Electrical and Computer Engineering\\
+%Georgia Institute of Technology,
+%Atlanta, Georgia 30332--0250\\ Email: see http://www.michaelshell.org/contact.html}
+%\IEEEauthorblockA{\IEEEauthorrefmark{2}Twentieth Century Fox, Springfield, USA\\
+%Email: homer@thesimpsons.com}
+%\IEEEauthorblockA{\IEEEauthorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
+%Telephone: (800) 555--1212, Fax: (888) 555--1212}
+%\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
+
+\maketitle
+
+{\let\thefootnote\relax\footnote{Dylan Hutchison is the corresponding
+    author and can be reached at dhutchis [at] mit.edu
+}}
+{\let\thefootnote\relax\footnote{This material is based upon work
+    supported by the National Science Foundation under Grant
+    No. DMS-1312831. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
+}}
+
+\setcounter{footnote}{0}
+
+% MACROS:
+\newcommand{\numparties}{\ensuremath{\mathcal{P}}}
+
+\input{00_abstract.tex}
+
+% For peerreview papers, this IEEEtran command inserts a page break and
+% creates the second title. It will be ignored for other modes.
+\IEEEpeerreviewmaketitle
+
+filler\cite{kepner2014achieving}
+
+\input{01_introduction.tex}
+\input{02_design.tex}
+\input{03_performance.tex}
+\input{04_conclusions.tex}
+
+%\begin{figure}[!t]
+%\centering
+%\includegraphics[width=2.5in]{myfigure}
+% where an .eps filename suffix will be assumed under latex,
+% and a .pdf suffix will be assumed for pdflatex; or what has been declared
+% via \DeclareGraphicsExtensions.
+%\caption{Simulation Results}
+%\label{fig_sim}
+%\end{figure}
+
+% Note that IEEE typically puts floats only at the top, even when this
+% results in a large percentage of a column being occupied by floats.
+
+
+% An example of a double column floating figure using two subfigures.
+% (The subfig.sty package must be loaded for this to work.)
+% The subfigure \label commands are set within each subfloat command, the
+% \label for the overall figure must come after \caption.
+% \hfil must be used as a separator to get equal spacing.
+% The subfigure.sty package works much the same way, except \subfigure is
+% used instead of \subfloat.
+%
+%\begin{figure*}[!t]
+%\centerline{\subfloat[Case I]\includegraphics[width=2.5in]{subfigcase1}%
+%\label{fig_first_case}}
+%\hfil
+%\subfloat[Case II]{\includegraphics[width=2.5in]{subfigcase2}%
+%\label{fig_second_case}}}
+%\caption{Simulation results}
+%\label{fig_sim}
+%\end{figure*}
+%
+% Note that often IEEE papers with subfigures do not employ subfigure
+% captions (using the optional argument to \subfloat), but instead will
+% reference/describe all of them (a), (b), etc., within the main caption.
+
+
+% An example of a floating table. Note that, for IEEE style tables, the
+% \caption command should come BEFORE the table. Table text will default to
+% \footnotesize as IEEE normally uses this smaller font for tables.
+% The \label must come after \caption as always.
+%
+%\begin{table}[!t]
+%% increase table row spacing, adjust to taste
+%\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+%\caption{An Example of a Table}
+%\label{table_example}
+%\centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+%\begin{tabular}{|c||c|}
+%\hline
+%One & Two\\
+%\hline
+%Three & Four\\
+%\hline
+%\end{tabular}
+%\end{table}
+
+
+% Note that IEEE does not put floats in the very first column - or typically
+% anywhere on the first page for that matter. Also, in-text middle ("here")
+% positioning is not used. Most IEEE journals/conferences use top floats
+% exclusively. Note that, LaTeX2e, unlike IEEE journals/conferences, places
+% footnotes above bottom floats. This can be corrected via the \fnbelowfloat
+% command of the stfloats package.
+
+% conference papers do not normally have an appendix
+
+
+% use section* for acknowledgement
+\section*{Acknowledgment}
+
+The authors wish to thank the entire Graphulo team at MIT CSAIL and
+MIT Lincoln Laboratory. We also thank the GraphBLAS contributors and
+National Science Foundation for their generous ongoing support of this program.
+
+% trigger a \newpage just before the given reference
+% number - used to balance the columns on the last page
+% adjust value as needed - may need to be readjusted if
+% the document is modified later
+%\IEEEtriggeratref{8}
+% The "triggered" command can be changed if desired:
+%\IEEEtriggercmd{\enlargethispage{-5in}}
+
+% references section
+
+% can use a bibliography generated by BibTeX as a .bbl file
+% BibTeX documentation can be easily obtained at:
+% http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
+% The IEEEtran BibTeX style support page is at:
+% http://www.michaelshell.org/tex/ieeetran/bibtex/
+%\bibliographystyle{IEEEtran}
+% argument is your BibTeX string definitions and bibliography database(s)
+%\bibliography{IEEEabrv,../bib/paper}
+%
+% <OR> manually copy in the resultant .bbl file
+% set second argument of \begin to the number of references
+% (used to reserve space for the reference number labels box)
+
+
+%\begin{thebibliography}{1}
+%
+%\bibitem{NIST}
+%P.~Mell and T.~Grace, \emph{The NIST Definition of Cloud Computing},
+%NIST Special Publication 800-145
+%
+%\end{thebibliography}
+
+\bibliographystyle{IEEEtran}
+\balance
+\bibliography{10_bibliography}
+
+
+\end{document}
+
+

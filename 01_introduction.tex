@@ -1,0 +1,106 @@
+%!TEX root =SpGEMM_ACCUMULO_HPEC.tex
+
+\section{Introduction}
+\label{sIntro}
+
+Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans.
+The next step past ingesting and scanning is computing---running algorithms and analytics.
+The advantage of doing computation in a database like Accumulo %, 
+%as opposed to YARN or MapReduce directly on HDFS, 
+is \emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}.
+Accumulo's features as a database enable fast access to data subsets and queries along indexed attributes.
+Further, Accumulo sits atop the physical location data is stored and cached, such that computation inside
+Accumulo tablet servers occurs local to data storage and avoids unnecessary network transfers.
+In fact, computation within Accumulo makes use of the distributed infrastructure already implemented 
+in Accumulo and perhaps more importantly, already deployed in production clusters using Accumulo.
+Why re-implement write-ahead logging, fault-tolerant executor (FATE) atop Zookeeper and 
+horizontal scalability from masters and tablet servers, for a new system that distributes computation?
+
+%I don't want to make something like MapReduce-- Accumulo facilitates a particular kind of computation 
+%using iterators.  Not all computation patterns fit into the iterator framework. EXAMPLE
+%We shouldn't stuff computation contradictory to the iterator framework into Accumulo, 
+%as many have done stretching iterative algorithms into the MapReduce framework.
+
+In this paper we implement one kind of computaion server-side on Accumulo: 
+Sparse GEneral Matrix Multiplication (SpGEMM).
+SpGEMM is a core operation at the backbone of many linear algebraic algorithms.
+One can even view graph search \cite{kepner2011graph} and table joins as applications of SpGEMM \cite{x}.
+In the context of Accumulo, we refer to SpGEMM as TableMult in the spirit of multiplying tables in place of matrices.
+Accumulo tables have many similarities to sparse matrices, though a more exact analogy is to Associative Arrays 
+\cite{kepner2014gabb}.
+
+
+%Like most databases, Accumulo is often used as a powerful, distributed, indexed key-value data storage service.
+%Programs read data from Accumulo and use it in further processing and/or write data to Accumulo that is 
+%raw data or the result of processing. 
+%Many users need to process data from Accumulo further before 
+%This use of Accumulo works well as when all one needs is a key-value store, 
+%but when the processing around data from Accumulo becomes complex, the user needs to create distributed computational
+%infrastructure 
+
+\todo[inline]{alternate wording below:}
+Enrichment \cite{x} is the process of taking an input data set and transforming it into a new dataset, such as by 
+applying a function or by fusing it with another dataset.
+If Accumulo is restricted to traditional database use as a distributed, indexed key-value data storage service,
+then a ``client'' must query Accumulo for necessary input data, apply the enrichment, and write the new data 
+to Accumulo.  
+Complex enrichment processes require complex client infrastructure to process large volumes of data efficiently,
+resulting in the need for distributed computation engines such as Spark \cite{x}.
+%Robust distributed computational infrastructure requires implementing service monitoring, 
+Accumulo has many of these distributed features already implemented and, when used as a database, 
+already deployed in the production clusters. 
+Instead of duplicating Accumulo's infrastructure and well-optimized scale-out parallelism
+in creating a new distributed computational system, we aim to shift computation 
+to within Accumulo where appropriate,
+as well as the possibility to perform computation more local to data storage.
+Some would call this concept server-side computation, though in the case of Accumulo we might call it 
+database-side computation.
+
+
+
+\subsection{Paper Outline}
+
+
+
+\section{Background}
+\label{sBackground}
+
+
+
+
+
+
+
+\subsection{Accumulo Iterators}
+Accumulo includes a mechanism to perform limited serer-side computation called the 
+\emph{iterator stack}.  Iterators inside the iterator stack are objects of classes
+that implement the \texttt{SortedKeyValueIterator<Key,Value>} (SKVI) interface, an interface
+reminiscent of but more complex than built-in Java iterators from the \texttt{java.lang} package
+in that they have methods to return a current entry (\texttt{getTopKey} and \texttt{getTopValue})
+and proceed to the next entry (\texttt{next}) until no more entries remain (\texttt{hasTop}).
+Iterators may hold state initialized in \texttt{init}, to which Accumulo hands 
+options of the form \texttt{Map<String,String>} passed from the client.%, though the state should 
+%be arranged in such a way as to
+
+Arguably, the most critical component of an iterator is its \texttt{seek} method,
+which instructs an iterator to jump to the beginning of a passed-in range. System iterators 
+at the top of an iterator stack perform actual disk seeks and cache locations in memory when seeked.
+
+During a scan, Accumulo constructs an iterator stack for each tablet whose keys overlap some portion 
+of the scan range. These iterator stacks may run in parallel, and each is seeked to the range of 
+keys in the current tablet, instersected with the scan range. When any call to the iterator stack 
+returns, Accumulo may choose to destroy the iterator stack and later re-create it,
+passing a new seek range starting at the last key returned from \texttt{getTopKey}, exclusive.
+Accumulo does this when it needs to switch data sources (such as RFiles) after a compaction, 
+when a client stops requesting data, or out of fairness to other concurrent scans.
+
+Iterators do not have full lifecycle control in that there is no \texttt{close} method 
+that allows an iterator to clean up its state before being destroyted. The only safe way for an 
+iterator to use state requiring cleanup, such as opening a file or starting a thread,
+is for the iterator to clean up its state before returning from a method call.
+Ideas discussed in the ticket ACCUMULO-3751 may lax this restriction for future versinos of Accumulo.
+
+%\1 Iterators are most commonly used for streaming computation in the sense that iterators
+%should ideally run in a single pass over their source's data and not store too much state.
+%\1 No lifecycle control.
+
