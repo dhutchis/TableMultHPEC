@@ -3,62 +3,72 @@
 \section{Performance}
 \label{sPerformance}
 
-To test the performance of our TableMult implementation, we create random graphs of increasing size and measure
-TableMult rate in terms of operations/second.  We also perform the same tests when input and output tables
-are split into two tablets, which allows processing them in parallel.
+We evalutate our TableMult implementation with a weak scaling experiment,
+measuring rate of computation as problem size increases.
+We define problem size as the number of nodes in random input graphs
+measure rate of computation as the number of partial products processed per second.  
+We also perform the same tests when input and output tables
+are split into two tablets each, which allows Accumulo to scan and write to them in parallel.
 
-We use ordinary D4M as a baseline to compare our Graphulo TableMult implementation against, since without 
-TableMult a user's next best alternative is to read the input graphs from Accumulo to a client, 
+%idea: below x-axis, put # of partial products
+
+We use D4M as a baseline to compare our Graphulo TableMult implementation against, because 
+a user's next best alternative to TableMult is to read the input graphs from Accumulo to a client, 
 compute the matrix product at the client, and insert the result back into Accumulo.
 
-D4M stores tables in Matlab as Associative Array objects.  D4M Associative Array multiplication is highly
-optimized and runs very quickly, considering the entire tables are stored in memory. The bottleneck is
-on reading data from Accumulo and especially on writing the results back to Accumulo.
-We consequently expect TableMult to perform better than D4M, since it avoids the need to transfer data out of Accumulo 
-in order to process it. We also expect TableMult to succeed on larger graph instances than D4M, since it 
-uses a streaming outer product algorithm that does not require storing input tables in memory.
-An alternative D4M implementation is to mirror TableMult's outer product algorithm and operate in a
-streaming fashion. This would enable D4M to run on larger problem sizes but decrease performance.
-We therefore imagine the whole-table D4M implementation as an upper bound on the best performance 
-achievable when performing the multiplication with a client outside the Accumulo.
+D4M stores tables in Matlab as Associative Array objects, written as Assocs for short.  
+D4M Associative Array multiplication is highly
+optimized and runs very quickly, considering the entire tables are stored in memory. D4M's bottleneck is
+therefore on reading data from Accumulo and especially on writing results back to Accumulo.
+We consequently expect TableMult to perform better than D4M because it avoids the need to transfer data out of Accumulo 
+in order to process it. 
 
-We use the Graph500 random graph generator to create random input matrices. %also used in 100M insert/sec paper
+We also expect TableMult to succeed on larger graph instances than D4M, since TableMult
+uses a streaming outer product algorithm that does not require storing input tables in memory.
+An alternative D4M implementation is to mirror TableMult's streaming outer product algorithm.
+This would enable D4M to run on larger problem sizes but decrease performance.
+We therefore imagine the whole-table D4M implementation as an upper bound on the best performance 
+achievable when performing the multiplication with a client outside Accumulo's infrastructure.
+
+We use the Graph500 random graph generator \cite{x} to create random input matrices. %also used in 100M insert/sec paper
 The generator creates graphs with a power law structure, such that node degree is very high for the 
 first row of the input table (or in terms of graphs, first vertex) has many edges
 and further rows have an exponentially decreasing number of edges.
 The graph generator takes a SCALE and EdgesPerVertex parameter and creates graphs with 2\textsuperscript{SCALE} 
 vertices and EdgesPerVertex $\times$ 2\textsuperscript{SCALE} edges.
-We fix EdgesPerVertex to 16 and use SCALE to vary input problem size. 
+We fix EdgesPerVertex to 16 and use SCALE to vary problem size. 
 
-For each SCALE parameter, we generate two random graphs and insert each into Accumulo tables using D4M.
-The two random graphs are created from different random seeds.
-We multiply the transpose of the first table with the second table in our tests.
+%We multiply the transpose of the first table with the second table in our tests.
 The following procedure outlines our performance test for a given SCALE and number of tablets (1 or 2).
 \begin{enumerate}
-\item Generate two random graphs (using new and different random seeds) 
-and insert each into Accumulo tables using D4M.
+\item Generate two random graphs with different random seeds and insert them into Accumulo tables using D4M.
 \item In the case of two tablets, identify an optimal split point for each input graph
 and set the input graphs' table splits equal to that point.
 ``Optimal'' here means a split point that nearly evenly divides an input graph into two tablets.
-\item Compact each input table so that Accumulo redistributes the tables' entries into the assigned tablets.
-\item \label{ePreSplit1} Create an empty output table and pre-split it with the splits from the first of the input tables.
+\item \label{ePreSplit1} Create an empty output table and pre-split it with the first input table's split.
 The split will not be optimal for the output table because the matrix product has a different degree distribution 
 than that of the input tables, but it is close enough for the purposes of our test.
-\item Run and time the Graphulo TableMult operation, configuring it to scan the input tables and write to the 
-output table.
-\item Create and pre-split a new result table for the D4M comparison as in step~\ref{ePreSplit1}.
+\item \label{ePreSplit1Compact} Compact the input and output tables 
+so that Accumulo redistributes the tables' entries into the assigned tablets.
+\item Run and time the Graphulo TableMult operation, 
+multiplying the transpose of the first input with the second input table.
+\item Create, pre-split and compact a new result table for the D4M comparison 
+as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
 \item Run and time the D4M equivalent of TableMult, using the following steps:
  \begin{enumerate}
  \item Scan both input tables into D4M Associative Array objects in Matlab memory.
- \item Convert the string values from Accumulo into numeric values.
- \item Perform D4M Associate Array multiplication.
- \item Convert the result table back to String values and insert the result into Accumulo.
+ \item Convert the string values from Accumulo into numeric values for each Assoc.
+ \item Multiply the transpose of the first Assoc with the second Assoc.
+ \item Convert the result Assoc back to String values and insert it into Accumulo.
  \end{enumerate}
 \end{enumerate}
 
 %\subsection{Environment}
 We conduct the tests on a laptop with 16GB RAM and 2 Intel i7 processors at 3GHz
 running Ubuntu 14.04 linux. We use single-instance Accumulo 1.6.1, Hadoop 2.6.0 and ZooKeeper 3.4.6.
+We allocate 2GB of memory to the Accumulo tablet server initially, allowing increases in 500MB step sizes,
+1GB for Accumulo's native in-memory maps and 256MB for data and index caches.
+
 
 We chose not to run with more than two tablets per table because it would result in too many threads 
 a single laptop could handle.  Each additional tablet can potentially result in the following threads:
@@ -69,16 +79,30 @@ a single laptop could handle.  Each additional tablet can potentially result in 
 \item Table B client-side scan thread (running from the client iniating the operation; mostly idle)
 \item Table C server-side write thread (running with a combiner implementing $\oplus$)
 \item Table C client-side write thread (running from a RemoteWriteIterator)
-\item Potentially other threads as Accumulo needs to minor compact in the middle of a TableMult
+\item Table C server-side minor compaction threads
 \end{enumerate}
-We look forward to extending our test to a larger Accumulo cluster that can handle many degrees of parallelism.
+We look forward to extending our test to a larger Accumulo cluster that can handle more degrees of parallelism.
 
-%Figure~\ref{fTableMultPerf} displays the results of our tests.
+\begin{figure*}[h]
+\centering
+\includegraphics[width=5.5in]{TableMultRate}
+\caption{Data flow through the TableMult iterator stack}
+\label{fTableMultPerf}
+\end{figure*}
 
-%\begin{figure}[htb]
-%\centering
-\includegraphics[width=3.4in]{TableMultRate}
-%\caption{Data flow through the TableMult iterator stack}
-%\label{fTableMultPerf}
-%\end{figure}
+Figure~\ref{fTableMultPerf} displays test results.
+The best results we could achieve are flat horizontal lines, indicating that we maintain the same level of
+operations per second as problem size increases.
 
+We could not run the D4M test comparison past SCALE 15 because we cannot fit the input and output tables
+in memory.
+
+One reason we see a decrease in performance results at larger problem sizes is that Accumulo
+needs to minor compact the result table in the middle of the TableMult. This in turn triggers 
+the $\oplus$ Combiner on the table, which sums paartial products written to the result table so far.
+Thus, one explanation for the rate decrease is that 
+our rate estimate in terms of partial products per second does not include the summing operations
+Accumulo must perform when it needs to minor compact.
+
+%More generally, memory contention was a constant factor in all the data points.
+%Odd factor: OS frequently killed the Accumulo garbage collector.

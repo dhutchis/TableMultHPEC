@@ -98,7 +98,7 @@ Iterators do not have full lifecycle control in that there is no \texttt{close} 
 that allows an iterator to clean up its state before being destroyted. The only safe way for an 
 iterator to use state requiring cleanup, such as opening a file or starting a thread,
 is for the iterator to clean up its state before returning from a method call.
-Ideas discussed in the ticket ACCUMULO-3751 may lax this restriction for future versinos of Accumulo.
+Ideas discussed in \cite{ACCUMULO-3751} may lax this restriction for future Accumulo versions.
 
 %\1 Iterators are most commonly used for streaming computation in the sense that iterators
 %should ideally run in a single pass over their source's data and not store too much state.

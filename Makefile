@@ -63,8 +63,8 @@ kpdf:
 clean:
 	rm -f $(INPUT)$(PSEXT)
 	rm -f $(INPUT)$(DVIEXT) 
-	rm -f $(INPUT)$(PDFEXT)
 	rm -f *.aux *.bbl *.blg *.log *.toc
 
 cleaner: clean
 	rm -f *~
+	rm -f $(INPUT)$(PDFEXT)

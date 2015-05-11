@@ -33,14 +33,18 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
-%\usepackage[]{algorithm2e}
+\usepackage[]{algorithm2e}
 %\usepackage{amsmath}
 \usepackage{amsfonts} % for \mathbb{R}
+\usepackage{amssymb} % for \intercal
 %\usepackage[margin=1.15in]{geometry}
 %\usepackage{units} %\nicefrac
 \usepackage{authblk}
 
-
+\newcommand{\matr}[1]{\mathbf{#1}} % undergraduate algebra version
+%\newcommand{\matr}[1]{#1}          % pure math version
+%\usepackage{bm}
+%\newcommand{\matr}[1]{\bm{#1}}     % ISO complying version
 \DeclareMathOperator{\fore}{foreach}
 \DeclareMathOperator{\emit}{emit}
 
@@ -48,7 +52,7 @@
 
 \begin{document}
 
-\title{Matrix Multiply in Accumulo}
+\title{Graphulo Matrix Multiply}
 
 
 %% \author{
@@ -226,6 +230,34 @@ National Science Foundation for their generous ongoing support of this program.
 \balance
 \bibliography{10_bibliography}
 
+%\appendix
+\section*{Performance Numbers}
+
+\begin{table*}[htb]                                                                                            
+\centering                                                                                                           
+\begin{tabular}{|r|r|r|r|r|r|r|r|r|r|r|}                                                                             
+\hline                                                                                                               
+ & & & \multicolumn{2}{|c|}{Graphulo 1 Tablet} & \multicolumn{2}{|c|}{D4M 1 Tablet} & \multicolumn{2}{|c|}{Graphulo 2 Tablets} & \multicolumn{2}{|c|}{D4M 2 Tablets} \\
+SCALE & \#PartialProducts & nnz(C) & Time (s) & Rate & Time (s) & Rate & Time (s) & Rate & Time (s) & Rate \\        
+\hline                                                                                                               
+10 & 804,989 & 269,404 & 2.79 & 288,319.84 & 2.94 & 273,575.94 & 2.14 & 375,408.75 & 2.96 & 271,817.07 \\            
+\hline                                                                                                               
+11 & 2,361,580 & 814,644 & 7.59 & 310,885.56 & 8.85 & 266,699.94 & 5.22 & 452,262.67 & 8.94 & 264,132.83 \\          
+\hline                                                                                                               
+12 & 6,816,962 & 2,430,381 & 21.38 & 318,844.63 & 27.30 & 249,633.32 & 15.39 & 442,786.38 & 37.25 & 182,983.58 \\    
+\hline                                                                                                               
+13 & 19,111,689 & 7,037,007 & 57.82 & 330,486.24 & 155.58 & 122,834.05 & 54.16 & 352,846.59 & 180.27 & 106,014.96 \\ 
+\hline                                                                                                               
+14 & 52,656,204 & 20,029,427 & 160.45 & 328,167.63 & 586.62 & 89,761.16 & 136.73 & 385,107.45 & 594.49 & 88,572.50 \\
+\hline                                                                                                               
+15 & 147,104,084 &  & 502.86 & 292,532.77 & 2,510.38 & 58,598.13 & 399.24 & 368,452.34 & 2,559.24 & 57,479.52 \\     
+\hline                                                                                                               
+16 & 400,380,031 & 163,481,262 & 1,475.81 & 271,294.29 &  &  & 1,230.81 & 325,297.94 &  &  \\                        
+\hline                                                                                                               
+\end{tabular}
+\caption{Numerical results and parameters for Figure~\ref{fTableMultPerf}}
+\label{ltable}
+\end{table*}
 
 \end{document}
 
