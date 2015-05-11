@@ -2,6 +2,7 @@
 
 \section{Introduction}
 \label{sIntro}
+% 
 
 Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans.
 The next step past ingesting and scanning is computing---running algorithms and analytics.
@@ -10,22 +11,42 @@ The advantage of doing computation in a database like Accumulo %,
 is \emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}.
 Accumulo's features as a database enable fast access to data subsets and queries along indexed attributes.
 Further, Accumulo sits atop the physical location data is stored and cached, such that computation inside
-Accumulo tablet servers occurs local to data storage and avoids unnecessary network transfers.
-In fact, computation within Accumulo makes use of the distributed infrastructure already implemented 
-in Accumulo and perhaps more importantly, already deployed in production clusters using Accumulo.
-Why re-implement write-ahead logging, fault-tolerant executor (FATE) atop Zookeeper and 
-horizontal scalability from masters and tablet servers, for a new system that distributes computation?
+Accumulo tablet servers occurs local to data storage and avoids unnecessary network transfers,
+effectively moving ``compute to data'' in contrast to client-server models that move ``data to compute.''
+Computation within Accumulo also reuses its distributed infrastructure
+(such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
+horizontal scalability from masters and tablet servers), 
+which in environments already using Accumulo, are already deployed in production clusters,
+saving the need to install and maintain a new distributed system for computation.
+
+One form of computation commonly run on database data is linear algebra.
+Researchers in the GraphBLAS Forum \cite{x} have identified a set of primitive operations 
+that form the basis for linear algebraic algorithms useful for graphs, including 
+Sparse General Matrix Multiplication (SpGEMM),  Sparse Element-wise Multiplication (SpEWiseX),
+Sparse Reference of a subset (SpRef), Reduction along a dimension (Reduce),
+Function application (Apply) and others.
+Graphulo is an effort to realize the GraphBLAS primitives 
+and enable algorithms in the language of linear algebra server-side on Accumulo \cite{x}.
 
 %I don't want to make something like MapReduce-- Accumulo facilitates a particular kind of computation 
 %using iterators.  Not all computation patterns fit into the iterator framework. EXAMPLE
 %We shouldn't stuff computation contradictory to the iterator framework into Accumulo, 
 %as many have done stretching iterative algorithms into the MapReduce framework.
 
-In this paper we implement one kind of computaion server-side on Accumulo: 
-Sparse GEneral Matrix Multiplication (SpGEMM).
-SpGEMM is a core operation at the backbone of many linear algebraic algorithms.
+In this paper we focus on implementing SpGEMM, a core operation at the heart of GraphBLAS.
+%SpGEMM is arguably the most challenging GraphBLAS operation
+In fact, most of the other GraphBLAS primitives can be expressed in terms of SpGEMM.
+We can realize SpEWiseX by multiplying the transpose of the first matrix with the second
+and using a custom multiplication function that only acts on elements whose row from the first 
+matches the column of the second and returns multiplied elements with the using the row and column of the second.
+\todo{Too much detail for intro}
+We can realize SpRef when selecting a subset of rows by multiplying on the left with an identity matrix containing those rows,
+and we can realize it when selecting a subset of column by multiplying similarly on the right.
+We can realize Reduce by multiplying on the left or right depending on the dimension of interest by a dense vector of all ones.
+%backbone of many linear algebraic algorithms.
 One can even view graph search \cite{kepner2011graph} and table joins as applications of SpGEMM \cite{x}.
-In the context of Accumulo, we refer to SpGEMM as TableMult in the spirit of multiplying tables in place of matrices.
+
+We call our implementation of SpGEMM on Accumulo TableMult, short for multiplication of Accumulo tables.
 Accumulo tables have many similarities to sparse matrices, though a more exact analogy is to Associative Arrays 
 \cite{kepner2014gabb}.
 
