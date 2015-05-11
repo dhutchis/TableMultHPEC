@@ -46,14 +46,14 @@
 %\newcommand{\matr}[1]{#1}          % pure math version
 %\usepackage{bm}
 %\newcommand{\matr}[1]{\bm{#1}}     % ISO complying version
-\DeclareMathOperator{\fore}{foreach}
-\DeclareMathOperator{\emit}{emit}
-
+%\DeclareMathOperator{\fore}{foreach}
+%\DeclareMathOperator{\emit}{emit}
+%\newcommand{\tr}[0]{T}
 
 
 \begin{document}
 
-\title{Graphulo Matrix Multiply}
+\title{Graphulo: Server-side Matrix Multiply on Accumulo Tables}
 
 
 %% \author{
@@ -62,14 +62,23 @@
 %% Cambridge, MA 02420\\
 %% \{vijayg, kepner, bamiller\}@ll.mit.edu}}
 
-\author[*]{Dylan Hutchison\thanks{dhutchis@mit.edu}}
-\author[*]{Jeremy Kepner\thanks{kepner@csail.mit.edu}}
-\author[*]{Vijay Gadepally\thanks{vijayg@csail.mit.edu}}
-\author[$\dagger$]{Adam Fuchs\thanks{adam@sqrrl.com}}
-\affil[*]{MIT Lincoln Laboratory}
-\affil[$\dagger$]{Sqrrl}
+\author[D. Hutchison et al.]
+       {Dylan Hutchison$^1$, Jeremy Kepner$^{1,2,3}$, Vijay Gadepally$^{1,2}$, Adam Fuchs$^4$\\
+         \\
+         $^1$MIT Lincoln Laboratory BeaverWorks\\
+         $^2$MIT Computer Science and Artificial Intelligence Laboratory\\
+         $^3$MIT Mathematics Department\\
+         $^4$Sqrrl\\
+       }
 
-\renewcommand\Authands{, }
+%% \author[*,$\dagger$]{Dylan Hutchison\thanks{dhutchis@mit.edu}}
+%% \author[*]{Jeremy Kepner\thanks{kepner@csail.mit.edu}}
+%% \author[*]{Vijay Gadepally\thanks{vijayg@csail.mit.edu}}
+%% \author[$\dagger$]{Adam Fuchs\thanks{adam@sqrrl.com}}
+%% \affil[*]{MIT Lincoln Laboratory}
+%% \affil
+%% \affil[$\dagger$]{Sqrrl}
+%% \renewcommand\Authands{, }
 
 % for over three affiliations, or if they all won't fit within the width
 % of the page, use this alternative format:
@@ -90,8 +99,8 @@
 
 \maketitle
 
-{\let\thefootnote\relax\footnote{Dylan Hutchison is the corresponding
-    author and can be reached at dhutchis [at] mit.edu
+{\let\thefootnote\relax\footnote{\hspace{-\parindent}Dylan Hutchison is the corresponding
+    author, reachable at dhutchis@mit.edu.
 }}
 {\let\thefootnote\relax\footnote{This material is based upon work
     supported by the National Science Foundation under Grant

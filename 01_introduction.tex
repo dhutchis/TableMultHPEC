@@ -4,24 +4,25 @@
 \label{sIntro}
 % 
 
-Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans.
-The next step past ingesting and scanning is computing---running algorithms and analytics.
-The advantage of doing computation in a database like Accumulo %, 
+Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans \cite{sen2013benchmarking}.
+The next step past ingesting and scanning is computing---running enrichment, algorithms and analytics.
+Advantages of doing computation in a database like Accumulo %, 
 %as opposed to YARN or MapReduce directly on HDFS, 
-is \emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}.
+are \emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}.
 Accumulo's features as a database enable fast access to data subsets and queries along indexed attributes.
 Further, Accumulo sits atop the physical location data is stored and cached, such that computation inside
 Accumulo tablet servers occurs local to data storage and avoids unnecessary network transfers,
 effectively moving ``compute to data'' in contrast to client-server models that move ``data to compute.''
-Computation within Accumulo also reuses its distributed infrastructure
-(such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
-horizontal scalability from masters and tablet servers), 
-which in environments already using Accumulo, are already deployed in production clusters,
-saving the need to install and maintain a new distributed system for computation.
+Computation within Accumulo also reuses its distributed infrastructure, 
+such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
+horizontal scalability from masters load balancing tablets.
+Why not reuse these services already deployed in production clusters that use Accumulo,
+rather than install and maintain new distributed systems for computation?
 
-One form of computation commonly run on database data is linear algebra.
+%cite linear algebra on database data?
+One family of computation commonly run on database data is linear algebra.
 Researchers in the GraphBLAS Forum \cite{x} have identified a set of primitive operations 
-that form the basis for linear algebraic algorithms useful for graphs, including 
+that form a basis for linear algebraic algorithms useful for graphs, including 
 Sparse General Matrix Multiplication (SpGEMM),  Sparse Element-wise Multiplication (SpEWiseX),
 Sparse Reference of a subset (SpRef), Reduction along a dimension (Reduce),
 Function application (Apply) and others.
@@ -35,56 +36,44 @@ and enable algorithms in the language of linear algebra server-side on Accumulo 
 
 In this paper we focus on implementing SpGEMM, a core operation at the heart of GraphBLAS.
 %SpGEMM is arguably the most challenging GraphBLAS operation
-In fact, most of the other GraphBLAS primitives can be expressed in terms of SpGEMM.
+In fact, most GraphBLAS primitives can be expressed in terms of SpGEMM.
 We can realize SpEWiseX by multiplying the transpose of the first matrix with the second
 and using a custom multiplication function that only acts on elements whose row from the first 
-matches the column of the second and returns multiplied elements with the using the row and column of the second.
+matches the column of the second and returns multiplied elements using the row and column of the second;
 \todo{Too much detail for intro}
-We can realize SpRef when selecting a subset of rows by multiplying on the left with an identity matrix containing those rows,
-and we can realize it when selecting a subset of column by multiplying similarly on the right.
-We can realize Reduce by multiplying on the left or right depending on the dimension of interest by a dense vector of all ones.
+we can realize SpRef when selecting a row or column subset by multiplying on the left or right with an identity matrix 
+containing those rows or columns;
+we can realize Reduce by multiplying on the left or right %depending on the dimension of interest 
+by a dense vector of all ones.
 %backbone of many linear algebraic algorithms.
-One can even view graph search \cite{kepner2011graph} and table joins as applications of SpGEMM \cite{x}.
+One can even view graph search \cite{kepner2011graph} and table joins \cite{x} as applications of SpGEMM.
 
-We call our implementation of SpGEMM on Accumulo TableMult, short for multiplication of Accumulo tables.
+We call our implementation of SpGEMM on Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
 Accumulo tables have many similarities to sparse matrices, though a more exact analogy is to Associative Arrays 
 \cite{kepner2014gabb}.
 
+We are particularly interested in SpGEMM for queued analytics, that is, analytics on a selected table subset.  
+Queued analytics allows us to maximally take advantage of Accumulo as a database 
+by quickly accessing a subset of interest, 
+whereas whole-table analytics usually perform better on parallel file systems such as Lustre or Hadoop.
+We therefore prioritize low latency over high throughput, %when we must choose between them
+in the best case enabling analysts to manipulate Accumulo data interactively.
+% explain why performance is whole-table
 
-%Like most databases, Accumulo is often used as a powerful, distributed, indexed key-value data storage service.
-%Programs read data from Accumulo and use it in further processing and/or write data to Accumulo that is 
-%raw data or the result of processing. 
-%Many users need to process data from Accumulo further before 
-%This use of Accumulo works well as when all one needs is a key-value store, 
-%but when the processing around data from Accumulo becomes complex, the user needs to create distributed computational
-%infrastructure 
+%\subsection{Paper Outline}
 
-\todo[inline]{alternate wording below:}
-Enrichment \cite{x} is the process of taking an input data set and transforming it into a new dataset, such as by 
-applying a function or by fusing it with another dataset.
-If Accumulo is restricted to traditional database use as a distributed, indexed key-value data storage service,
-then a ``client'' must query Accumulo for necessary input data, apply the enrichment, and write the new data 
-to Accumulo.  
-Complex enrichment processes require complex client infrastructure to process large volumes of data efficiently,
-resulting in the need for distributed computation engines such as Spark \cite{x}.
-%Robust distributed computational infrastructure requires implementing service monitoring, 
-Accumulo has many of these distributed features already implemented and, when used as a database, 
-already deployed in the production clusters. 
-Instead of duplicating Accumulo's infrastructure and well-optimized scale-out parallelism
-in creating a new distributed computational system, we aim to shift computation 
-to within Accumulo where appropriate,
-as well as the possibility to perform computation more local to data storage.
-Some would call this concept server-side computation, though in the case of Accumulo we might call it 
-database-side computation.
+We review iterator stacks, Accumulo's model of server-side computation, in Section 2.
+Section 3 formally defines matrix multiplication and compares inner and outer product formulations,
+ultimately settling on outer product for our TableMult implementation.
+We show TableMult's design as Accumulo iterators in Section 4,
+and we test its scalability with experiments in Section 5.
+
+%Background and Algorithms
+%Primer
 
 
-
-\subsection{Paper Outline}
-
-
-
-\section{Background}
-\label{sBackground}
+%\section{Background}
+%\label{sBackground}
 
 
 
@@ -92,11 +81,11 @@ database-side computation.
 
 
 
-\subsection{Accumulo Iterators}
+\section{Accumulo Server-side Computation: Iterators}
 Accumulo includes a mechanism to perform limited serer-side computation called the 
 \emph{iterator stack}.  Iterators inside the iterator stack are objects of classes
 that implement the \texttt{SortedKeyValueIterator} (SKVI) interface, an interface
-reminiscent of but more complex than built-in Java iterators from the \texttt{java.lang} package
+reminiscent of but more complex than built-in Java iterators %from the \texttt{java.lang} package
 in that they have methods to return a current entry (\texttt{getTopKey} and \texttt{getTopValue})
 and proceed to the next entry (\texttt{next}) until no more entries remain (\texttt{hasTop}).
 Iterators may hold state initialized in \texttt{init}, to which Accumulo hands 
@@ -105,7 +94,7 @@ options of the form \texttt{Map<String,String>} passed from the client.%, though
 
 Arguably, the most critical component of an iterator is its \texttt{seek} method,
 which instructs an iterator to jump to the beginning of a passed-in range. System iterators 
-at the top of an iterator stack perform actual disk seeks and cache locations in memory when seeked.
+at the top of an iterator stack perform actual disk seeks.% and cache locations in memory when seeked.
 
 During a scan, Accumulo constructs an iterator stack for each tablet whose keys overlap some portion 
 of the scan range. These iterator stacks may run in parallel, and each is seeked to the range of 
