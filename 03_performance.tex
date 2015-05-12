@@ -81,23 +81,23 @@ We allocate 2GB of memory to the Accumulo tablet server initially, allowing incr
 We chose not to run with more than two tablets per table because it would result in too many threads 
 a single laptop could handle.  Each additional tablet can potentially add the following threads:
 \begin{enumerate}
-\item Table AT server-side scan thread
-\item Table AT client-side scan thread,
+\item Table $\matr{A}^\tr$ server-side scan thread
+\item Table $\matr{A}^\tr$ client-side scan thread,
 
 $\quad$ running from a RemoteSourceIterator
-\item Table B server-side scan/multiply thread,
+\item Table $\matr{B}$ server-side scan/multiply thread,
 
 $\quad$ running the TableMult iterator stack
-\item Table B client-side scan thread, 
+\item Table $\matr{B}$ client-side scan thread, 
 
 $\quad$ running from the client initiating; mostly idle
-\item Table C server-side write thread,
+\item Table $\matr{C}$ server-side write thread,
 
 $\quad$ running with a Combiner implementing $\oplus$
-\item Table C client-side write thread,
+\item Table $\matr{C}$ client-side write thread,
 
 $\quad$ running from a RemoteWriteIterator
-\item Table C server-side minor compaction threads
+\item Table $\matr{C}$ server-side minor compaction threads
 \end{enumerate}
 
 \begin{figure*}[h]

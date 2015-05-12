@@ -9,7 +9,7 @@ Given input matrices $\matr{A}$ of size $n \times m$, $\matr{B}$ of size $m \tim
 and operations $\oplus$ and $\otimes$ for scalar summation and multiplication,
 the matrix multiplication $\matr{A} \,{\oplus}.{\otimes}\, \matr{B} = \matr{C}$, or more shortly $\matr{A}\matr{B} = \matr{C}$,
 defines the entries of result matrix C as 
-\[ \matr{C}_{ij} = \bigoplus_{k=1}^m \matr{A}_{ik} \otimes \matr{B}_{kj} \]
+\[ \matr{C}(i,j) = \bigoplus_{k=1}^m \matr{A}(i,k) \otimes \matr{B}(k,j) \]
 We call intermediary results of $\otimes$ operations \emph{partial products}.
 
 In the case of sparse matrices, we only perform $\oplus$ and $\otimes$ operations where both operands are nonzero,
@@ -33,7 +33,7 @@ The more commonly used inner product method performs the following:
 \SetKw{emit}{emit}
 \fore($n$){
 \fore($p$){
-\emit{$\matr{A}_{n:} \cdot \matr{B}_{:p}$}
+\emit{$\matr{A}(n,:) \cdot \matr{B}(:,p)$}
 }}
 \end{algorithm}
 
@@ -44,12 +44,12 @@ The more commonly used inner product method performs the following:
 \fore($n$){
 \fore($p$){
 \fore($m$){
-\emit{$\matr{A}_{nm} \otimes \matr{B}_{mp}$}
+\emit{$\matr{A}(n,m) \otimes \matr{B}(m,p)$}
 }}}
 \end{algorithm}
 
 Inner product has an advantage of generating output ``in order,'' meaning that all partial products needed 
-to compute a particular element $\matr{C}_{np}$ are generated consecutively by the third-level for loop.
+to compute a particular element $\matr{C}(n,p)$ are generated consecutively by the third-level for loop.
 We may apply the $\oplus$ operation immediately after each third-level for loop and obtain an element in the result matrix.
 This means that inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
 locally before sending entries to a remote but globally-aware table combiner.
@@ -69,7 +69,7 @@ The outer product method performs the following:
 \SetKwBlock{fore}{foreach}{} 
 \SetKw{emit}{emit}
 \fore($m$){
-\emit{$\matr{A}_{:m} \times \matr{B}_{m:}$}
+\emit{$\matr{A}(:,m) \times \matr{B}(m,:)$}
 }
 \end{algorithm}
 
@@ -80,7 +80,7 @@ The outer product method performs the following:
 \fore($m$){
 \fore($n$){
 \fore($p$){
-\emit{$ \matr{A}_{nm} \otimes \matr{B}_{mp}$}
+\emit{$ \matr{A}(n,m) \otimes \matr{B}(m,p)$}
 }}}
 \end{algorithm}
 
