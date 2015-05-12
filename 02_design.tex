@@ -27,24 +27,24 @@ We study each in terms of how it implements the $\otimes$ component of matrix mu
 deferring the $\oplus$ operation to run on output generated from applying $\otimes$.
 In the pseudocode, `:' stands for ``all positions'' in the spirit of Matlab notation.
 
-The more commonly used inner product method performs the following:
+The more common inner product method runs the following:
 \begin{algorithm}[h]
-\SetKwBlock{fore}{foreach}{} 
+\SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($n$){
-\fore($p$){
-\emit{$\matr{A}(n,:) \cdot \matr{B}(:,p)$}
+\fore($i = 1\col n$){
+\fore($j = 1\col p$){
+\emit{$\matr{A}(i,:) \cdot \matr{B}(:,j)$}
 }}
 \end{algorithm}
 
 \noindent where the operation $\cdot$ is inner (also called dot) product on vectors, which we may unfold as
 \begin{algorithm}[h]
-\SetKwBlock{fore}{foreach}{} 
+\SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($n$){
-\fore($p$){
-\fore($m$){
-\emit{$\matr{A}(n,m) \otimes \matr{B}(m,p)$}
+\fore($i = 1\col n$){
+\fore($j = 1\col p$){
+\fore($k = 1\col m$){
+\emit{$\matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}
 \end{algorithm}
 
@@ -58,38 +58,43 @@ locally before sending entries to a remote but globally-aware table combiner.
 It is also adventageous that inner product generates entries sorted by row 
 and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
-Despite its order-preserving advantages, we chose not to implement inner product because 
-it requires multiple passes over input matrix $\matr{B}$. This is because the second-level for loop, 
-which runs over all the columns of matrix $\matr{B}$, must run for each row of matrix $\matr{A}$ (first-level for loop).
-Performance measurements proved this a major bottleneck since, in the case of Accumulo
-and with the assumption that we cannot fit all of matrix $\matr{B}$ in memory, it mandates multiple reads from disk.
+Despite its order-preserving advantages, we chose not to implement inner product 
+because it requires multiple passes:
+the second-level for loop that scans over all of input matrix $\matr{B}$
+repeats for each row of $\matr{A}$ from the top-level for loop iteration.
+%The same effect holds if we flipped the process symmetrically.
+Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
+multiple passes over $\matr{B}$ translates to multiple Accumulo scans that each require a disk read.
+We found in our performance tests that multiple scans over $\matr{B}$ 
+delivered over an order of magnitude worse performance, taking over 100 seconds to multiply SCALE 11 inputs
+whereas the outer product method ran in under 8.
 
-The outer product method performs the following:
+Outer product matrix multiply runs the following:
 \begin{algorithm}
-\SetKwBlock{fore}{foreach}{} 
+\SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($m$){
-\emit{$\matr{A}(:,m) \times \matr{B}(m,:)$}
+\fore($k = 1\col m$){
+\emit{$\matr{A}(:,k) \times \matr{B}(k,:)$}
 }
 \end{algorithm}
 
 \noindent where the operation $\times$ is outer (also called tensor or Carteisan) product on vectors, which we may unfold as
 \begin{algorithm}
-\SetKwBlock{fore}{foreach}{} 
+\SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($m$){
-\fore($n$){
-\fore($p$){
-\emit{$ \matr{A}(n,m) \otimes \matr{B}(m,p)$}
+\fore($k = 1\col m$){
+\fore($i = 1\col n$){
+\fore($j = 1\col p$){
+\emit{$ \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}
 \end{algorithm}
 
 Outer product emits partial products in chaotic, unsorted order.
-This is due to moving the $n$ and $p$ for loops, both responsible for determining partial product position,
-below the top-level $m$ for loop.
+This is due to moving the $i$ and $j$ for loops, both responsible for determining partial product position,
+below the top-level $k$ for loop.
 
 On the other hand, outer product only requires a single pass over both input matrices.
-This is because the top-level $m$ for loop fixes a dimension of both matrix $\matr{A}$ and $\matr{B}$.
+This is because the top-level $k$ for loop fixes a dimension of both matrix $\matr{A}$ and $\matr{B}$.
 Once we finish processing a full column of $\matr{A}$ and row of $\matr{B}$, the column and row are finished;
 there is no need to read them again (i.e., we never need to restart the top-level for loop).
 
@@ -242,6 +247,7 @@ and on any ordering of them, which is chaotic by the outer product's nature.
 If we truly had an $\oplus$ operation that required seeing all partial products at once,
 we would have to either gather partial products at the client or initiate a full major compaction.
 
+Our choice to defer the $\oplus$ operation 
 
 \subsubsection{Monitoring}
 RemoteWriteIterator never emits entries to the client by default. 
