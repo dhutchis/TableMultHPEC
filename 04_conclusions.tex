@@ -38,7 +38,8 @@ is not our bottleneck. We will be bound by BatchWrite time no matter how well we
 
 
 \section{Related Work} %Analogy to MapReduce with Accumulo Scanners, Iterators and BatchWriters:
-Our outer product method could also have been implemented in MapReduce \cite{x} or its successor YARN \cite{x}.
+Our outer product method could also have been implemented in MapReduce \cite{dean2008mapreduce} 
+on Hadoop or its successor YARN \cite{vavilapalli2013apache}.
 In fact, there is a natural analogy from
 how we process data using Accumulo infrastructure to methods in MapReduce.
 
@@ -62,7 +63,7 @@ It would be interesting to directly compare a MapReduce implementation in the fu
 \todo[inline]{Stored Procedures a la MySQL}
 
 % Talk about how we measured performance?
-To measure performance, we used techniques similar to those from Google Dapper \cite{x}.
+To measure performance, we used techniques similar to those from Google Dapper \cite{sigelman2010dapper}.
 We instrument sections of code inside try-finally statements, recording the start time before 
 entering those sections and ensuring we record stop times inside the finally portion.
 We store total time spent inside these code section ``spans'' inside thread-local storage,
@@ -73,3 +74,15 @@ and what portions of code took the longest.
 \section{Conclusions}
 \label{sConclusions}
 
+In this work we showcase the design of TableMult, a Graphulo implementation of the 
+SpGEMM GraphBLAS linear algebra kernal server-side on Accumulo tables.
+We compare inner and outer approaches for SpGEMM and show how outer product is better
+suited to the Accumulo iterator environment.
+Performance experiments show ideal weak scaling and hint at good strong scaling,
+although repeating our experiments on a larger cluster is necessary to confirm.
+
+Current research for Graphulo is to implement the rest of the GraphBLAS kernels 
+and develop algorithms calling them, % atop the Graphulo library,
+ultimately presenting a Graphulo linear algebra library 
+and demonstrating a pattern for server-side computation pattern
+to the Accumulo community.

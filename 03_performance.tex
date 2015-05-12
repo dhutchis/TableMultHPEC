@@ -3,43 +3,51 @@
 \section{Performance}
 \label{sPerformance}
 
-We evalutate our TableMult implementation with a weak scaling experiment,
-measuring rate of computation as problem size increases.
+We evaluate TableMult with two variants of an experiment. 
+First we gauge weak scaling by measuring rate of computation as problem size increases.
 We define problem size as the number of nodes in random input graphs
-measure rate of computation as the number of partial products processed per second.  
-We also perform the same tests when input and output tables
-are split into two tablets each, which allows Accumulo to scan and write to them in parallel.
+and rate of computation as the number of partial products processed per second.
+Second we gauge strong scaling by repeating the first experiment with all tables split into two tablets,
+allowing Accumulo to scan and write to them in parallel.
 
-%idea: below x-axis, put # of partial products
+%% We evalutate our TableMult implementation with a weak scaling experiment,
+%% measuring rate of computation as problem size increases.
+%% We define problem size as the number of nodes in random input graphs
+%% and rate of computation as the number of partial products processed per second.  
+%% We also perform the same tests when input and output tables
+%% are split into two tablets each, which allows Accumulo to scan and write to them in parallel.
 
-We use D4M as a baseline to compare our Graphulo TableMult implementation against, because 
+%Ideally we would include run our tests on more than two tablets to truly test strong scaling, 
+%but such tests are infeasible given the laptop's capabilities.
+
+We use D4M as a baseline to compare Graphulo TableMult performance because 
 a user's next best alternative to TableMult is to read the input graphs from Accumulo to a client, 
 compute the matrix product at the client, and insert the result back into Accumulo.
 
 D4M stores tables in Matlab as Associative Array objects, written as Assocs for short.  
-D4M Associative Array multiplication is highly
-optimized and runs very quickly, considering the entire tables are stored in memory. D4M's bottleneck is
-therefore on reading data from Accumulo and especially on writing results back to Accumulo.
-We consequently expect TableMult to perform better than D4M because it avoids the need to transfer data out of Accumulo 
-in order to process it. 
+D4M Assoc multiplication is highly optimized and runs very quickly, 
+particularly because the entire input tables are stored in memory. 
+D4M's bottleneck is therefore on reading data from Accumulo and especially on writing results back to Accumulo.
+We consequently expect TableMult to perform better than D4M 
+because TableMult avoids the need to transfer data out of Accumulo in order to process it. 
 
-We also expect TableMult to succeed on larger graph instances than D4M, since TableMult
+We also expect TableMult to succeed on larger graph instances than D4M because TableMult
 uses a streaming outer product algorithm that does not require storing input tables in memory.
-An alternative D4M implementation is to mirror TableMult's streaming outer product algorithm.
-This would enable D4M to run on larger problem sizes but decrease performance.
+An alternative D4M implementation would mirror TableMult's streaming outer product algorithm,
+enabling D4M to run on larger problem sizes at the cost of worse performance.
 We therefore imagine the whole-table D4M implementation as an upper bound on the best performance 
-achievable when performing the multiplication with a client outside Accumulo's infrastructure.
+achievable when performing multiplication on an Accumulo table outside Accumulo's infrastructure.
 
-We use the Graph500 random graph generator \cite{x} to create random input matrices. %also used in 100M insert/sec paper
-The generator creates graphs with a power law structure, such that node degree is very high for the 
-first row of the input table (or in terms of graphs, first vertex) has many edges
-and further rows have an exponentially decreasing number of edges.
+We use the Graph500 random graph generator \cite{bader2006designing} to create random input matrices.
+ %also used in 100M insert/sec paper
+The generator creates graphs with a power law structure, such that the first vertex has high degree
+and subsequent vertices have exponentially decreasing degree.
 The graph generator takes a SCALE and EdgesPerVertex parameter and creates graphs with 2\textsuperscript{SCALE} 
 vertices and EdgesPerVertex $\times$ 2\textsuperscript{SCALE} edges.
 We fix EdgesPerVertex to 16 and use SCALE to vary problem size. 
 
 %We multiply the transpose of the first table with the second table in our tests.
-The following procedure outlines our performance test for a given SCALE and number of tablets (1 or 2).
+The following procedure outlines our performance experiment for a given SCALE and either one or two tablets.
 \begin{enumerate}
 \item Generate two random graphs with different random seeds and insert them into Accumulo tables using D4M.
 \item In the case of two tablets, identify an optimal split point for each input graph
@@ -64,24 +72,33 @@ as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
 \end{enumerate}
 
 %\subsection{Environment}
-We conduct the tests on a laptop with 16GB RAM and 2 Intel i7 processors at 3GHz
+We conduct the experiments on a laptop with 16GB RAM and 2 Intel i7 processors at 3GHz
 running Ubuntu 14.04 linux. We use single-instance Accumulo 1.6.1, Hadoop 2.6.0 and ZooKeeper 3.4.6.
 We allocate 2GB of memory to the Accumulo tablet server initially, allowing increases in 500MB step sizes,
 1GB for Accumulo's native in-memory maps and 256MB for data and index caches.
 
 
 We chose not to run with more than two tablets per table because it would result in too many threads 
-a single laptop could handle.  Each additional tablet can potentially result in the following threads:
+a single laptop could handle.  Each additional tablet can potentially add the following threads:
 \begin{enumerate}
 \item Table AT server-side scan thread
-\item Table AT client-side scan thread (running from a RemoteSourceIterator)
-\item Table B server-side scan/multiply thread (running the TableMult iterator stack)
-\item Table B client-side scan thread (running from the client iniating the operation; mostly idle)
-\item Table C server-side write thread (running with a combiner implementing $\oplus$)
-\item Table C client-side write thread (running from a RemoteWriteIterator)
+\item Table AT client-side scan thread,
+
+$\quad$ running from a RemoteSourceIterator
+\item Table B server-side scan/multiply thread,
+
+$\quad$ running the TableMult iterator stack
+\item Table B client-side scan thread, 
+
+$\quad$ running from the client initiating; mostly idle
+\item Table C server-side write thread,
+
+$\quad$ running with a Combiner implementing $\oplus$
+\item Table C client-side write thread,
+
+$\quad$ running from a RemoteWriteIterator
 \item Table C server-side minor compaction threads
 \end{enumerate}
-We look forward to extending our test to a larger Accumulo cluster that can handle more degrees of parallelism.
 
 \begin{figure*}[h]
 \centering
@@ -91,18 +108,30 @@ We look forward to extending our test to a larger Accumulo cluster that can hand
 \end{figure*}
 
 Figure~\ref{fTableMultPerf} displays test results.
-The best results we could achieve are flat horizontal lines, indicating that we maintain the same level of
-operations per second as problem size increases.
+We could not run the D4M comparison past SCALE 15 because 
+the input and output tables do not fit in memory.
 
-We could not run the D4M test comparison past SCALE 15 because we cannot fit the input and output tables
-in memory.
+In terms of weak scaling, the best results we could achieve are flat horizontal lines, 
+indicating that we maintain the same level of operations per second as problem size increases.
+Graphulo roughly achieve weak scaling, although the two-tablet Graphulo curve 
+shows some instability.
 
-One reason we see a decrease in performance results at larger problem sizes is that Accumulo
+One reason we see a slightly downward trend in rate at larger problem sizes is that Accumulo
 needs to minor compact the result table in the middle of the TableMult. This in turn triggers 
 the $\oplus$ Combiner on the table, which sums paartial products written to the result table so far.
 Thus, one explanation for the rate decrease is that 
 our rate estimate in terms of partial products per second does not include the summing operations
 Accumulo must perform when it needs to minor compact.
+
+In terms of strong scaling, the best results we could achieve are two-tablet rates
+at double the one-tablet rates for every problem size.
+Our experiment shows that Graphulo two-tablet multiply rates perform as much as 1.5x better
+than one-tablet rates.  This may be due to very high processor contention as a result of 
+the 14 threads that may run concurrently with two tablets; in fact,
+processor usage hovered around 100\% for all four laptop cores throughout the two-tablet experiments.
+We expect better strong scaling results once we move our experiment 
+to a larger Accumulo cluster that can handle more degrees of parallelism.
+
 
 %More generally, memory contention was a constant factor in all the data points.
 %Odd factor: OS frequently killed the Accumulo garbage collector.

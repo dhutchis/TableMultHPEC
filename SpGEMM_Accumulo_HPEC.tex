@@ -48,7 +48,7 @@
 %\newcommand{\matr}[1]{\bm{#1}}     % ISO complying version
 %\DeclareMathOperator{\fore}{foreach}
 %\DeclareMathOperator{\emit}{emit}
-%\newcommand{\tr}[0]{T}
+\newcommand{\tr}[0]{{\!\intercal}}
 
 
 \begin{document}
@@ -263,6 +263,10 @@ SCALE & \#PartialProducts & nnz(C) & Time (s) & Rate & Time (s) & Rate & Time (s
 15 & 147,104,084 &  & 502.86 & 292,532.77 & 2,510.38 & 58,598.13 & 399.24 & 368,452.34 & 2,559.24 & 57,479.52 \\     
 \hline                                                                                                               
 16 & 400,380,031 & 163,481,262 & 1,475.81 & 271,294.29 &  &  & 1,230.81 & 325,297.94 &  &  \\                        
+\hline                                                                                                               
+17 & 1,086,789,275 & 677,175,416 & 4,208.24 & 258,252.42 &  &  & 3,972.13 & 273,603.14 &  &  \\                      
+\hline                                                                                                               
+18 & 2,937,549,526 & 966,262,286 & 12,161.74 & 241,540.15 &  &  &  &  &  &  \\                                       
 \hline                                                                                                               
 \end{tabular}
 \caption{Numerical results and parameters for Figure~\ref{fTableMultPerf}}
