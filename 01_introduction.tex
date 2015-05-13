@@ -7,41 +7,39 @@
 %Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans \cite{sen2013benchmarking}.
 %The next step past ingesting and scanning is computing---running enrichment, algorithms and analytics.
 
-Traditional NoSQL databases such as Apache Accumulo have largely
-concentrated on providing high performance ingest and
-scans~\cite{sen2013benchmarking}. While such tasks may solve a subset
-of big data problems, more complex analytics involve running tasks
+NoSQL databases %such as Apache Accumulo
+concentrate on high performance ingest and scans~\cite{sen2013benchmarking}. 
+While ingests and scans solve some big data problems,
+more complex analytics involve running tasks
 such as enrichment, algorithms and analytics. These techniques
-often involve moving data from a database or storage engine to a
-computational element to perform the required task. The ability to
+often move data from a database or storage engine to a
+computational element. The ability to
 perform enrichment, algorithms or analytics directly in a database or
-storage engine can provide benefirts such as: \emph{selective access},
-\emph{data locality} and \emph{infrastructure reuse}. Consider the
-popular Apache Accumulo database whose features as a database enable
-fast access to data subsets and queries along indexed attributes. The
-abilty to perform computation within Accumulo can offer a number of
-benefits. 
+storage engine can provide benefits such as \emph{selective access},
+\emph{data locality} and \emph{infrastructure reuse}. 
 
+Consider the popular Apache Accumulo database whose features as a database enable
+fast access to data subsets and queries along indexed attributes. 
 % Conducting computation within a database like Accumulo offers several advantages,
 % assuming we can efficiently map it to the database's programming model:
 % %as opposed to YARN or MapReduce directly on HDFS, are 
-
-For example, Accumulo sits atop physical data is stored and cached, such that computation inside
-Accumulo can avoid unnecessary network transfers,
+Accumulo sits atop the physical location data is stored and cached, 
+such that computation inside Accumulo can avoid unnecessary network transfers,
 effectively moving ``compute to data'' like a stored procedure
-in contrast to client-server models that moves ``data to compute.''
-Computation within Accumulo also reuses its distributed infrastructure, 
+in contrast to client-server models that move ``data to compute.''
+Computing within Accumulo also reuses its distributed infrastructure, 
 such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
-horizontal scalability from master's load balancing tablets.
+horizontal scalability from a master load balancing tablets.
 
 %cite linear algebra on database data?
 Linear algebraic kernels form a basis for some of the most common
-computational kernels applied to large scae data. Researchers in the GraphBLAS Forum \cite{mattson2014standards} have identified a set of primitive operations 
+computational kernels applied to large scale data. 
+Researchers in the GraphBLAS Forum \cite{mattson2014standards} have identified a set of primitive operations 
 that form a basis for linear algebraic algorithms useful for graphs, including 
 Sparse General Matrix Multiplication (SpGEMM),  Sparse Element-wise Multiplication (SpEWiseX),
 Sparse Reference of a subset (SpRef), Reduction along a dimension (Reduce),
 Function application (Apply) and others.
-This article presents Graphulo which is an effort to realize the GraphBLAS primitives 
+This article presents Graphulo, an effort to realize the GraphBLAS primitives 
 and enable algorithms in the language of linear algebra server-side in Accumulo \cite{gadepally2015gabb}.
 
 %I don't want to make something like MapReduce-- Accumulo facilitates a particular kind of computation 
@@ -51,25 +49,16 @@ and enable algorithms in the language of linear algebra server-side in Accumulo 
 
 In this paper we focus on implementing SpGEMM, a core kernel at the
 heart of the GraphBLAS.
-%SpGEMM is arguably the most challenging GraphBLAS operation
 In fact, many other GraphBLAS primitives can be expressed in terms of
-SpGEMM through custom functions. SpGEMM usage ranges from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} 
+SpGEMM through custom functions. 
+SpGEMM usage ranges from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} 
 and plenty others described in the introduction of \cite{bulucc2010highly}.
-
-% For example, one can realize SpEWiseX by multiplying the transpose of the first matrix with the second
-% and using a custom multiplication function that only acts on elements whose row from the first 
-% matches the column of the second and returns multiplied elements using the row and column of the second;
-% \todo{Too much detail for intro}
-% we can realize SpRef when selecting a row or column subset by multiplying on the left or right with an identity matrix 
-% containing those rows or columns;
-% and we can realize Reduce by multiplying on the left or right %depending on the dimension of interest 
-% by a dense vector of all ones.
 
 We call our implementation of SpGEMM on Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
 Accumulo tables have many similarities to sparse matrices, though a more precise analogy is with Associative Arrays 
 \cite{kepner2014gabb}. For the purpose of this work, we concentrate on
-large distributed tables that may not fit in memory and use a straming
-approach that can distribute with the Accumulo infrastructure.
+large distributed tables that may not fit in memory and use a streaming
+approach that can distribute with Accumulo's infrastructure.
 % Because Accumulo tables may span Hadoop clusters,
 % we never assume a table fits in memory
 % and instead take a streaming approach that distributes with Accumulo's infrastructure.

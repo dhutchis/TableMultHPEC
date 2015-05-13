@@ -14,3 +14,16 @@ the major compaction since major compactions take a higher thread pool priority 
 
 
 
+In fact, most GraphBLAS primitives can be expressed in terms of SpGEMM.
+We can realize SpEWiseX by multiplying the transpose of the first matrix with the second
+and using a custom multiplication function that only acts on elements whose row from the first 
+matches the column of the second and returns multiplied elements using the row and column of the second;
+\todo{Too much detail for intro}
+we can realize SpRef when selecting a row or column subset by multiplying on the left or right with an identity matrix
+containing those rows or columns;
+and we can realize Reduce by multiplying on the left or right %depending on the dimension of interest 
+by a dense vector of all ones.
+Outside SpGEMM usage ranges from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} 
+
+
+
