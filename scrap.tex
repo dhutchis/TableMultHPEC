@@ -1,0 +1,16 @@
+
+
+
+Our initial design operated the iterator stack on a full major compaction.
+We chose to operate the iterator stack on a scan instead because major compactions experience
+a delay on the order of seconds before Accumulo schedules them, slightly bumping latency,
+and because opening a BatchWriter inside an iterator at major compaction presents a small chance for deadlock.
+Deadlock may occur if the major compaction iterators triggered enough minor compactions 
+such that they exhaust every thread in the compaction thread pool.
+This leaves open the chance that a major compaction thread would block on a minor compaction thread
+in order for the BatchWriter to write entries, while in turn the minor compaction thread blocks on 
+the major compaction since major compactions take a higher thread pool priority than minor ones.
+
+
+
+
