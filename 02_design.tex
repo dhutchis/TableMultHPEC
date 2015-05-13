@@ -31,8 +31,6 @@ deferring the $\oplus$ operation to run on output generated from applying $\otim
 In the pseudocode, `:' stands for ``all positions'' in the spirit of Matlab notation.
 
 
-\todo{You may be able to save a lot of space by removing the inner
-  product discussion}
 The more common inner product method runs the following:
 \begin{algorithm}[h]
 \SetKwBlock{fore}{for}{} 
@@ -129,8 +127,9 @@ TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 
 
 \todo{I think you have too much here...you can cut things like Java calls}
-We implement SpGEMM with three server-side iterators placed on a BatchScan of Table $\matr{B}$:
+We implement SpGEMM with three iterators placed on a BatchScan of table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
+The BatchScanner directs Accumulo to run the iterators on tablets of $\matr{B}$ in parallel.
 %The: We place these iterators on  scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
 %that inform the client about TableMult progress. 
 %% Instead, the scan on table $\matr{B}$ reads from table $\matr{A}$T
@@ -140,22 +139,22 @@ RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
 
 The key idea behind the TableMult iterators is that they divert normal dataflow by opening a BatchWriter,
 %reducing entries sent to the client to zero and instead sending 
-redirecting entries out-of-band to a sink table via %result table $\matr{C}$
+redirecting entries out-of-band to a result table via %result table $\matr{C}$
 Accumulo's standard ingest channel that does not require sorted order. 
 The scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
 that inform the client about TableMult progress.
 %Thus the TableMult iterators act as reduction iterators, even though they actually transmit 
 %a huge stream of entries out-of-band to another Accumulo table.
-We also enable multi-table iterator dataflow by opening Scanners 
-that read outside Accumulo tables out-of-band.
+We enable multi-table iterator dataflow by opening Scanners 
+that read remote Accumulo tables out-of-band.
 %which in the case of SpGEMM means scanning table $\matr{A^\tr}$.
 Scanners and BatchWriters are standard tools for Accumulo clients; 
-by creating them inside Accumulo iterators, we enable all the functionality of client-side processing 
+by creating them inside Accumulo iterators, we enable client-side processing patterns
 within the Accumulo server.
 
-In the case of SpGEMM, we use a Scanner on table $\matr{A^\tr}$
+We illustrate TableMult's data flow in Figure~\ref{fIteratorStackSpGEMM},
+placing a Scanner on table $\matr{A^\tr}$
 and a BatchWriter on result table $\matr{C}$.
-Figure~\ref{fIteratorStackSpGEMM} illustrates TableMult's data flow.
 
 \begin{figure}[htb]
 \centering
