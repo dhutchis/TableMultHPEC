@@ -58,11 +58,10 @@ The split will not be optimal for the output table because the matrix product ha
 than that of the input tables, but it is close enough for the purposes of our test.
 \item \label{ePreSplit1Compact} Compact the input and output tables 
 so that Accumulo redistributes the tables' entries into the assigned tablets.
-\item Run and time the Graphulo TableMult operation, 
-multiplying the transpose of the first input with the second input table.
+\item Run and time Graphulo TableMult multiplying the transpose of the first input table with the second.
 \item Create, pre-split and compact a new result table for the D4M comparison 
 as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
-\item Run and time the D4M equivalent of TableMult, using the following steps:
+\item Run and time the D4M equivalent of TableMult:
  \begin{enumerate}
  \item Scan both input tables into D4M Associative Array objects in Matlab memory.
  \item Convert the string values from Accumulo into numeric values for each Assoc.
@@ -100,12 +99,12 @@ $\quad$ running from a RemoteWriteIterator
 \item Table $\matr{C}$ server-side minor compaction threads
 \end{enumerate}
 
-\begin{figure*}[h]
+\begin{figure}[tbh]
 \centering
-\includegraphics[width=5.5in]{TableMultRate}
+\includegraphics[width=\linewidth]{TableMultRate}
 \caption{Data flow through the TableMult iterator stack}
 \label{fTableMultPerf}
-\end{figure*}
+\end{figure}
 
 Figure~\ref{fTableMultPerf} displays test results.
 We could not run the D4M comparison past SCALE 15 because 
@@ -126,12 +125,11 @@ Accumulo must perform when it needs to minor compact.
 In terms of strong scaling, the best results we could achieve are two-tablet rates
 at double the one-tablet rates for every problem size.
 Our experiment shows that Graphulo two-tablet multiply rates perform as much as 1.5x better
-than one-tablet rates.  This may be due to very high processor contention as a result of 
+than one-tablet rates.  We attribute our shortfall to high processor contention as a result of 
 the 14 threads that may run concurrently with two tablets; in fact,
 processor usage hovered around 100\% for all four laptop cores throughout the two-tablet experiments.
+
 We expect better strong scaling results once we move our experiment 
 to a larger Accumulo cluster that can handle more degrees of parallelism.
 
-
-%More generally, memory contention was a constant factor in all the data points.
 %Odd factor: OS frequently killed the Accumulo garbage collector.

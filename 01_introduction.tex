@@ -6,13 +6,16 @@
 
 Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans \cite{sen2013benchmarking}.
 The next step past ingesting and scanning is computing---running enrichment, algorithms and analytics.
-Advantages of doing computation in a database like Accumulo %, 
-%as opposed to YARN or MapReduce directly on HDFS, 
-are \emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}.
+
+Conducting computation within a database like Accumulo offers several advantages,
+assuming we can efficiently map it to the database's programming model:
+%as opposed to YARN or MapReduce directly on HDFS, are 
+\emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}.
 Accumulo's features as a database enable fast access to data subsets and queries along indexed attributes.
 Further, Accumulo sits atop the physical location data is stored and cached, such that computation inside
 Accumulo tablet servers occurs local to data storage and avoids unnecessary network transfers,
-effectively moving ``compute to data'' in contrast to client-server models that move ``data to compute.''
+effectively moving ``compute to data'' like a stored procedure
+in contrast to client-server models that move ``data to compute.''
 Computation within Accumulo also reuses its distributed infrastructure, 
 such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
 horizontal scalability from masters load balancing tablets.
@@ -46,26 +49,30 @@ containing those rows or columns;
 and we can realize Reduce by multiplying on the left or right %depending on the dimension of interest 
 by a dense vector of all ones.
 Outside SpGEMM usage ranges from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} 
-and plenty others.
+and plenty others described in the introduction of \cite{bulucc2010highly}.
 
 We call our implementation of SpGEMM on Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
 Accumulo tables have many similarities to sparse matrices, though a more exact analogy is to Associative Arrays 
 \cite{kepner2014gabb}.
+Because Accumulo tables may span Hadoop clusters,
+we never assume a table fits in memory
+and instead take a streaming approach that distributes with Accumulo's infrastructure.
 
 We are particularly interested in SpGEMM for queued analytics, that is, analytics on a selected table subset.  
-Queued analytics allows us to maximally take advantage of Accumulo as a database 
-by quickly accessing a subset of interest, 
+Queued analytics allow us to maximally take advantage of Accumulo as a database 
+by quickly accessing subsets of interest, 
 whereas whole-table analytics usually perform better on parallel file systems such as Lustre or Hadoop.
 We therefore prioritize low latency over high throughput, %when we must choose between them
 in the best case enabling analysts to manipulate Accumulo data interactively.
 
 %\subsection{Paper Outline}
 
-We review iterator stacks, Accumulo's model of server-side computation, in Section 2.
-Section 3 formally defines matrix multiplication and compares inner and outer product formulations,
-ultimately settling on outer product for our TableMult implementation.
-We show TableMult's design as Accumulo iterators in Section 4,
-and we test its scalability with experiments in Section 5.
+We review iterator stacks, Accumulo's model of server-side computation, in Section~\ref{sAccumuloIterators}.
+We formally define matrix multiplication and compare inner and outer product SpGEMM mehtods
+in Section~\ref{sMatMul}, ultimately settling on outer product for our TableMult implementation.
+We show TableMult's design as Accumulo iterators in Section~\ref{sTableMult},
+and we test its scalability with experiments in Section~\ref{sPerformance}.
+We conclude with a discussion on design alternatives in Section~\ref{sDiscussion}.
 
 %Background and Algorithms
 %Primer
@@ -80,7 +87,8 @@ and we test its scalability with experiments in Section 5.
 
 
 
-\section{Accumulo Iterators}
+\subsection{Primer: Accumulo Iterators}
+\label{sAccumuloIterators}
 Accumulo's server-side programming model is the %includes a mechanism to perform limited serer-side computation called the 
 \emph{iterator stack}, a list of objects that implement the \texttt{SortedKeyValueIterator} (SKVI) interface.
 At a high level, the iterator stack is like a collection of datastreams originating

@@ -5,6 +5,7 @@
 
 
 \subsection{Matrix Multiplication}
+\label{sMatMul}
 Given input matrices $\matr{A}$ of size $n \times m$, $\matr{B}$ of size $m \times p$,
 and operations $\oplus$ and $\otimes$ for scalar summation and multiplication,
 the matrix multiplication $\matr{A} \,{\oplus}.{\otimes}\, \matr{B} = \matr{C}$, or more shortly $\matr{A}\matr{B} = \matr{C}$,
@@ -49,8 +50,8 @@ The more common inner product method runs the following:
 \end{algorithm}
 
 Inner product has an advantage of generating output ``in order,'' meaning that all partial products needed 
-to compute a particular element $\matr{C}(n,p)$ are generated consecutively by the third-level for loop.
-We may apply the $\oplus$ operation immediately after each third-level for loop and obtain an element in the result matrix.
+to compute a particular element $\matr{C}(i,j)$ are generated consecutively by the third-level loop.
+We may apply the $\oplus$ operation immediately after each third-level loop and obtain an element in the result matrix.
 This means that inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
 locally before sending entries to a remote but globally-aware table combiner.
 % move to another section?
@@ -60,14 +61,14 @@ and column, which allows inner product to be used in standard iterator stacks th
 
 Despite its order-preserving advantages, we chose not to implement inner product 
 because it requires multiple passes:
-the second-level for loop that scans over all of input matrix $\matr{B}$
-repeats for each row of $\matr{A}$ from the top-level for loop iteration.
+the second-level loop that scans over all of input matrix $\matr{B}$
+repeats for each row of $\matr{A}$ from the top-level loop iteration.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
 multiple passes over $\matr{B}$ translates to multiple Accumulo scans that each require a disk read.
 We found in our performance tests that multiple scans over $\matr{B}$ 
 delivered over an order of magnitude worse performance, taking over 100 seconds to multiply SCALE 11 inputs
-whereas the outer product method ran in under 8.
+whereas the outer product method ran in under 8 seconds.
 
 Outer product matrix multiply runs the following:
 \begin{algorithm}
@@ -89,33 +90,40 @@ Outer product matrix multiply runs the following:
 }}}
 \end{algorithm}
 
-Outer product emits partial products in chaotic, unsorted order.
-This is due to moving the $i$ and $j$ for loops, both responsible for determining partial product position,
-below the top-level $k$ for loop.
+Outer product emits partial products in unsorted order.
+This is due to moving the $i$ and $j$ loops
+that determine partial product position
+below the top-level $k$ loop.
 
 On the other hand, outer product only requires a single pass over both input matrices.
-This is because the top-level $k$ for loop fixes a dimension of both matrix $\matr{A}$ and $\matr{B}$.
-Once we finish processing a full column of $\matr{A}$ and row of $\matr{B}$, the column and row are finished;
-there is no need to read them again (i.e., we never need to restart the top-level for loop).
+This is because the top-level $k$ loop fixes a dimension of both $\matr{A}$ and $\matr{B}$.
+Once we finish processing a full column of $\matr{A}$ and row of $\matr{B}$,
+we never need to read them again (i.e., we never need to restart the top-level $k$ loop).
 
-We may speed the outer product algorithm by storing rows of table $\matr{B}$ in memory,
-which eliminates the need to re-read rows of $\matr{B}$ for each run of the third-level for loop.
+In terms of memory usage, outer product works best when we can fit one of the matching row and column in memory.
+If neither fits in memory, then we could still run the algorithm by
+re-reading rows of $\matr{B}$ while streaming through columns of $\matr{A}$ as the loops suggest.
+%as suggested by the second-level loop repeating the third-level loop running through rows of $\matr{B}$.
+Running through columns of $\matr{A}$ instead is possible by symmetry of $i$ and $k$.
 %Storing one row in memory is a much lower cost than storing a whole matrix in memory.
-In the case of Accumulo, we can even eliminate the need to hold a row in memory by using
-deepCopy SKVI methods to store ``pointers'' to the beginning of the current row m of table $\matr{B}$.
-However, this strategy may come at the cost of extra disk seeks, and so
-we leave testing its performance to future work, for now storing the current row of table $\matr{B}$ in memory.
+We may implement the ``no memory assumption'' streaming appraoch in Accumulo by using
+\texttt{deepCopy} SKVI methods to store ``pointers'' to the beginning of rows from table $\matr{B}$
+(or columns of table $\matr{A}$),
+perhaps at the cost of extra disk reads.
+%However, this strategy may come at the cost of extra disk seeks, and so
+%we leave testing its performance to future work, for now storing the current row of table $\matr{B}$ in memory.
 
-Since m is the second dimension of matrix $\matr{A}$, we implement 
-SpGEMM to operate on the transpose $\matr{A^\tr}$ of input table $\matr{A}$.
+Because $k$ runs along the second dimension of $\matr{A}$
+and Accumulo uses a row-oriented data layout, we implement 
+TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 
 
 
 \subsection{TableMult Iterators}
-We use three new server-side iterators to implement SpGEMM: 
+\label{sTableMult}
+We implement SpGEMM with three server-side iterators placed on a BatchScan of Table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
-We place these iterators on a scan of Table $\matr{B}$. 
-%The scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
+%The: We place these iterators on  scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
 %that inform the client about TableMult progress. 
 %% Instead, the scan on table $\matr{B}$ reads from table $\matr{A}$T
 %% by opening a Scanner and writes to result table $\matr{C}$
@@ -167,8 +175,7 @@ which is ok for our purpose since SpGEMM operates on the Cartesian product of en
 ColFilter is defined similarly to rowRanges, except that we do not allow ranges to occur in the colFilter
 because Accumulo does not index columns.  We may enable ranges anyway in the future by using an Accumulo
 Filter iterator subclass to only return the entries within a column range set.
-Such a feature would require scanning every column, 
-which can affect performance if bottlenecked on table reads.
+Such a feature requires scanning every column and will affect performance if bottlenecked on table reads.
 We encourage users to maintain a tranpose table for cases requiring column indexing.
 
 Scanning a subset of rows in a table is crucial for queued analytics, since those analaytics 
@@ -280,6 +287,31 @@ we will be able to change the tablet server scan cache on a per-scan basis rathe
 that affects concurrent scans on table $\matr{B}$.
 %not in this paper: gather information within the RemoteWriteIterator to send back to the client
 
+%%\subsubsection{Client API}
+%% The following shows how client programs call TableMult in Java:
 
-\todo[inline]{Put Java signature of TableMult call?}
+%% %\todo[inline]{Put Java signature of TableMult call?}
+
+%% \definecolor{javared}{rgb}{0.6,0,0} % for strings
+%% \definecolor{javagreen}{rgb}{0.25,0.5,0.35} % comments
+%% \definecolor{javapurple}{rgb}{0.5,0,0.35} % keywords
+%% \definecolor{javadocblue}{rgb}{0.25,0.35,0.75} % javadoc
+ 
+%% \lstset{language=Java,
+%% basicstyle=\ttfamily,
+%% keywordstyle=\color{javapurple}\bfseries,
+%% stringstyle=\color{javared},
+%% commentstyle=\color{javagreen},
+%% morecomment=[s][\color{javadocblue}]{/**}{*/},
+%% numbers=left,
+%% numberstyle=\tiny\color{black},
+%% stepnumber=2,
+%% numbersep=10pt,
+%% tabsize=4,
+%% showspaces=false,
+%% showstringspaces=false}
+
+%% \begin{lstlisting}
+
+%% \end{lstlisting}
 
