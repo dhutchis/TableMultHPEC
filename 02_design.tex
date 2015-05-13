@@ -7,7 +7,7 @@
 \subsection{Matrix Multiplication}
 \label{sMatMul}
 Given input matrices $\matr{A}$ of size $n \times m$, $\matr{B}$ of size $m \times p$,
-and operations $\oplus$ and $\otimes$ for scalar summation and multiplication,
+and operations $\oplus$ and $\otimes$ representing summation and multiplication,
 the matrix multiplication $\matr{A} \,{\oplus}.{\otimes}\, \matr{B} = \matr{C}$, or more shortly $\matr{A}\matr{B} = \matr{C}$,
 defines the entries of result matrix C as 
 \[ \matr{C}(i,j) = \bigoplus_{k=1}^m \matr{A}(i,k) \otimes \matr{B}(k,j) \]
@@ -18,16 +18,21 @@ an optimization stemming from the requirement that 0 is an additive identity of 
 and that 0 is a multiplicative annhilator of $\otimes$ such that $a \otimes 0 = 0 \otimes a = 0$.
 Sparse arithmetic is impossible without these conditions, since in that case zero elements could generate nonzero results.
 
-In Accumulo, zero elements are entries that do not exist in a table. Entries that actually contain the value zero may exist
-from an operation producing a zero value (such as summing partial products 5, -3 and -2).  
-We currently deliver no special treatment to these entries and plan on adding
-an optional feature that removes them when encountered.
+% In Accumulo, zero elements are entries that do not exist in a table. Entries that actually contain the value zero may exist
+% from an operation producing a zero value (such as summing partial products 5, -3 and -2).  
+% We currently deliver no special treatment to these entries and plan on adding
+% an optional feature that removes them when encountered.
 
-There are two general patterns for performing matrix multiplication: inner product and outer product.
+
+
+There are two well known patterns for performing matrix multiplication: inner product and outer product.
 We study each in terms of how it implements the $\otimes$ component of matrix multiplication,
 deferring the $\oplus$ operation to run on output generated from applying $\otimes$.
 In the pseudocode, `:' stands for ``all positions'' in the spirit of Matlab notation.
 
+
+\todo{You may be able to save a lot of space by removing the inner
+  product discussion}
 The more common inner product method runs the following:
 \begin{algorithm}[h]
 \SetKwBlock{fore}{for}{} 
@@ -121,6 +126,9 @@ TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 
 \subsection{TableMult Iterators}
 \label{sTableMult}
+
+
+\todo{I think you have too much here...you can cut things like Java calls}
 We implement SpGEMM with three server-side iterators placed on a BatchScan of Table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
 %The: We place these iterators on  scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
@@ -194,6 +202,7 @@ Initialize an iterator that emits pairs of entries from the the matching rows' C
 \item Multiply. Pass pairs of entries to $\otimes$ and emit results. 
 \end{enumerate}
 
+\todo{I think this can be cut}
 In implementing the $\otimes$ operation as ordinary real number multiplication and $\oplus$ as addition,
 we decode Accumulo value byte arrays into Strings and then into \texttt{java.math.BigDecimal}
 objects. BigDecimal enables multiplication to work for very large and very precise real-valued numbers,
@@ -207,6 +216,7 @@ Entries do not have to be in sorted order because Accumulo sorts incoming entrie
 standard ingest process. Like RemoteSourceIterator, the client passes connection information 
 for the remote table via iterator options.
 
+\todo{I think this can be cut}
 Barring extreme events such as exceptions in the iterator stack or thread death,
 we designed RemoteWriteIterator to maintain correctness, such that entries generated from
 RemoteWriteIterator's source will be written to the remote table once.
@@ -215,6 +225,8 @@ before ceding thread contol back to the Accumulo tablet server.  We do this in t
 streaming every entry from RemoteWriteIterator's source (within the seek range) into a BatchWriter at once, 
 by repeatedly calling the \texttt{getTop} and \texttt{next} methods of its source and \texttt{flush}ing afterward.
 
+
+\todo{I think this can be cut}
 % Not too important but a common concern from some in the Accumulo community:
 We completely close the BatchWriter in a finalize method.
 The JVM does not guarantee calling objects' finalize method before it garbage collects them, 
@@ -277,6 +289,8 @@ before emitting or how long a duration between emitting monitor entries. We enco
 in the monitoring entry value. Between the key and value, the client can see how far the TableMult operation progressed
 in terms of number of emitted entries and progress in scanning row keys from tables $\matr{A^\tr}$ and $\matr{B}$.
 %The approach scales as further B is split into more and more tablets.
+
+\todo{I think this can be cut}
 
 In order for the client to receive monitoring entries before the TableMult completes,
 we must change the \texttt{table.scan.max.memory} paramter of table $\matr{B}$ to as small a value as possible, say one byte. 
