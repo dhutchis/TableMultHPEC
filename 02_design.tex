@@ -246,12 +246,16 @@ we would have to either gather partial products at the client or initiate a full
 
 \subsubsection{Monitoring}
 RemoteWriteIterator never emits entries to the client by default. 
-One downside of this approach is that clients cannot precisely track the progress of a TableMult operation.
-The only information clients would have are scan and write rates from the Accumulo monitor,
-whether a scan is running, idle or queued from the tablet server, and what partial products 
-are written so far from scanning the result table.
+One downside of this approach is that clients cannot precisely track the progress of a TableMult operation,
+which may frustrate users expecting a more interactive computing experience.
+Clients could query the Accumulo monitor for read/write rates 
+or prematurely scan partial products written to $\matr{C}$, but both approaches are unhelpfully coarse.
+%having only access to coarse Accumulo monitor rate information or partial product scans on $\matr{C}$.
+%% The only information clients would have are scan and write rates from the Accumulo monitor,
+%% whether a scan is running, idle or queued from the tablet server, and what partial products 
+%% are written so far from scanning the result table.
 
-We therefore implemented a monitoring option that emits a value
+We therefore implement a monitoring option that emits a value
 containing the number of entries TwoTableIterator processed
 at a client-set frequency.
 RemoteWriteIterator emits monitoring entries at ``safe'' points, that is,
@@ -261,8 +265,10 @@ if Accumulo destroys, re-creates and re-seeks it.
 Stopping after emitting the last value in the outer product of two rows is safe 
 because we place the last value's row key in the monitoring key and know, 
 in the event of an iterator stack rebuild, to proceed to the next matching row.
-We are also experimenting with stopping in the middle of an outer product by encoding the 
-column family and qualifier of input tables' keys in the monitoring key.
+We may succeed in stopping during an outer product 
+by encoding more information in the monitoring key.
+%We are also experimenting with stopping in the middle of an outer product by encoding the 
+%column family and qualifier of input tables' keys in the monitoring key.
 
 
 %%\subsubsection{Client API}

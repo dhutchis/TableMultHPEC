@@ -12,14 +12,15 @@ concentrate on high performance ingest and scans~\cite{sen2013benchmarking}.
 While fast ingest and scans solve some big data problems,
 more complex scenarios involve running tasks
 such as enrichment, algorithms and analytics. These techniques
-often move data from a database or storage engine to a
-computational element. The ability to
-perform enrichment, algorithms or analytics directly in a database or
-storage engine can provide benefits such as \emph{selective access},
-\emph{data locality} and \emph{infrastructure reuse}. 
+often move data from a database %or storage engine 
+to a computational element. The ability to
+%perform enrichment, algorithms or analytics directly in a database or storage engine
+compute directly in a database can lead to benefits including 
+%can provide benefits such as 
+\emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}. 
 
-Consider the Apache Accumulo database whose features as a database enable
-fast access to data subsets and queries along indexed attributes. 
+Consider the Apache Accumulo database whose features as a database deliver
+fast answers to data subsets along indexed attributes. 
 % Conducting computation within a database like Accumulo offers several advantages,
 % assuming we can efficiently map it to the database's programming model:
 % %as opposed to YARN or MapReduce directly on HDFS, are 
@@ -27,18 +28,18 @@ Accumulo sits atop the physical location data is stored and cached
 such that computation inside Accumulo can avoid unnecessary network transfer,
 effectively moving ``compute to data'' like a stored procedure
 in contrast to client-server models moving ``data to compute.''
-Computing in Accumulo also reuses its distributed infrastructure, 
+Computing in Accumulo also reuses its distributed infrastructure
 such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
 horizontal scaling from a master load balancing tablets.
 
 %cite linear algebra on database data?
-Linear algebraic kernels form a basis for some of the most common
-computational kernels applied to large scale data. 
-Researchers in the GraphBLAS Forum \cite{mattson2014standards} have identified a set of primitive operations 
+One family of algorithms commonly applied to large scale data is linear algebra.
+Researchers in the GraphBLAS Forum \cite{mattson2014standards} 
+have identified a set of kernels
 that form a basis for linear algebraic algorithms useful for graphs, including 
-Sparse General Matrix Multiplication (SpGEMM),  Sparse Element-wise Multiplication (SpEWiseX),
-Sparse Reference of a subset (SpRef), Reduction along a dimension (Reduce),
-Function application (Apply) and others.
+sparse general matrix multiplication (SpGEMM), sparse element-wise multiplication (SpEWiseX),
+sparse subset reference (SpRef), reduction along a dimension (Reduce),
+function application (Apply) and others.
 This article presents Graphulo, an effort to realize the GraphBLAS primitives 
 and enable algorithms in the language of linear algebra server-side in Accumulo \cite{gadepally2015gabb}.
 
@@ -97,7 +98,7 @@ Accumulo stores data in Hadoop as byte arrays decomposed into (key, value) pairs
 Keys decompose further into rows, column families, qualifiers, visibilities and timestamps,
 though we mainly consider rows and column qualifiers in this work.
 Entries belong to tables that Accumulo divides into tablets and assigns to tablet servers.
-Clients write new data via BatchWriters and retrieve stored data from tablets sequentially via Scanners
+Clients write new entries via BatchWriters and retrieve stored entries from tablets sequentially via Scanners
 or in parallel via BatchScanners.
 
 Accumulo's server-side programming model runs an \emph{iterator stack} on each tablet in range of a scan, 

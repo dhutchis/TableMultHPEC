@@ -2,7 +2,22 @@
 
 \begin{abstract}
 
-todo
+Server-side computation is difficult in Accumulo 
+due to its design for distributed storage and not for general computing,
+yet many big data applications such as enrichment and analytics \todo{use more specific example}
+compute on Accumulo data and persist results back to Accumulo anyway.
+Users must subsequently implement complex clients and shuffle 
+data between Accumulo storage and engines for compute.
+
+In this work we enable SpGEMM, sparse matrix multiplication,
+server-side on Accumulo tables
+by repurposing Accumulo iterators.
+We compare mathematics and performance 
+of inner and outer product approaches 
+and show how an outer product implementation scales with synthetic experiments.
+% part of the Graphulo library
+We offer our work as a first step for the Graphulo library
+that will deliver linear algebra primitives server-side on Accumulo.
 
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
@@ -11,3 +26,4 @@ todo
 % then you can use LaTeX's standard command \boldmath at the very start
 % of the abstract to achieve this. Many IEEE journals/conferences frown on
 % math in the abstract anyway. 
+
