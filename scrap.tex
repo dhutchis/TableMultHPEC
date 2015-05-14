@@ -27,3 +27,113 @@ Outside SpGEMM usage ranges from graph search \cite{kepner2011graph} to table jo
 
 
 
+
+A client may also specify rows and columns to scan via a rowRanges and colFilter option, 
+if not scanning the whole table. We encode the rowRanges option in ``D4M syntax,'' consisting of 
+delimitted row keys and the `:' character to indicate ranges between row keys.
+In our encoding, ``a,:,b,d,f,:,'' translates to the ranges 
+``[a,b\textbackslash{}0), [d,d\textbackslash{}0), [f,$+\infty$).'' The comma used as a delimitter in the example 
+may be any character not present in a row key, and we disallow rows consisting of a single `:'.
+We do not include column family or deeper fields in our encoding and leave them empty, 
+which is acceptable for our purpose since SpGEMM operates on the Cartesian product of entire rows.
+
+ColFilter is defined similarly to rowRanges, except that we do not allow ranges to occur in the colFilter
+because Accumulo does not index columns.  We may enable ranges anyway in the future by using an Accumulo
+Filter iterator subclass to only return the entries within a column range set.
+Such a feature requires scanning every column and will affect performance if bottlenecked on table reads.
+
+
+We do this in the \texttt{seek} method,
+streaming every entry from RemoteWriteIterator's source (within the seek range) into a BatchWriter at once, 
+by repeatedly calling the \texttt{getTop} and \texttt{next} methods of its source and \texttt{flush}ing afterward.
+
+We completely close the BatchWriter in a finalize method.
+The JVM does not guarantee calling objects' finalize method before it garbage collects them, 
+but in our experience, the JVM called finalize in every non-extreme circumstance
+and we guarantee correctness even if finalize is not called. Alternatives such as using \texttt{java.lang.ref}
+classes and closing BatchWriters in place of flushing them are open.
+% link: http://books.google.com/books?id=ka2VUBqHiWkC&pg=PA27&lpg=PA27&dq=effective+java+avoid+finalizers&source=bl&ots=yYGkMgn-QZ&sig=o66EY94GVzB3uvNOvj9eLhdI35k&hl=en&sa=X&ei=0nsxUPeHHILp0gHx1oBI&ved=0CGMQ6AEwAg#v=onepage&q=effective%20java%20avoid%20finalizers&f=false
+
+
+
+We control the frequency of emitting monitoring entries by specifying iterator options in terms of how many entries
+before emitting or how long a duration between emitting monitor entries. We encode the number of entries processed so far 
+in the monitoring entry value. Between the key and value, the client can see how far the TableMult operation progressed
+in terms of number of emitted entries and progress in scanning row keys from tables $\matr{A^\tr}$ and $\matr{B}$.
+%The approach scales as further B is split into more and more tablets.
+
+
+
+In order for the client to receive monitoring entries before the TableMult completes,
+we change table $\matr{B}$'s \texttt{table.scan.max.memory} parameter to as small a value as possible, say one byte. 
+This forces Accumulo to send entries from the BatchWriteIterator to the client immediately as they are generated.
+We may restore the previous parameter value (default 512KB) once TableMult completes.
+If a proposed change \cite{ACCUMULO-261} is applied to future Accumulo versions,
+we will be able to change the tablet server scan cache on a per-scan basis rather than a per-table basis
+that affects concurrent scans on table $\matr{B}$.
+%not in this paper: gather information within the RemoteWriteIterator to send back to the client
+
+
+
+
+SKVIs are reminiscent of built-in Java iterators %from the \texttt{java.lang} package
+in that they have methods to return a current entry (\texttt{getTopKey} and \texttt{getTopValue})
+and proceed to the next entry (\texttt{next}) until no more entries remain (\texttt{hasTop}).
+On the other hand, SKVIs have more power than iterators in that they may initalize state
+inside an \texttt{init} method, to which Accumulo passes
+options of the form \texttt{Map<String,String>} from the client,
+and that SKVIs have a \texttt{seek} method that jumps to the beginning of a passed-in range. 
+System SKVIs at the top of an iterator stack perform actual disk seeks.% and cache locations in memory when seeked.
+
+During a scan, Accumulo constructs an iterator stack for each tablet whose keys overlap some portion 
+of the scan range. These iterator stacks may run in parallel, and each is seeked to the range of 
+keys in the current tablet, instersected with the scan range. When any call to the iterator stack 
+returns, Accumulo may choose to destroy the iterator stack and later re-create it,
+passing a new seek range starting at the last key returned from \texttt{getTopKey}, exclusive.
+Accumulo does this when it needs to switch data sources (such as RFiles) after a compaction, 
+when a client stops requesting data, or out of fairness to other concurrent scans.
+
+
+
+% Talk about how we measured performance?
+To measure performance, we used techniques similar to those from Google Dapper \cite{sigelman2010dapper}.
+We instrument sections of code inside try-finally statements, recording the start time before 
+entering those sections and ensuring we record stop times inside the finally portion.
+We store total time spent inside these code section ``spans'' inside thread-local storage,
+along with statistics on how many times we enter a span and the minimum and maximum amount of time
+spent inside a span. These statistics showed us what code was traversed more often than expected
+and what portions of code took the longest. 
+
+
+A frequent computaional pattern is to create intermediary tables in the middle of an algorithm 
+that are not needed once the algorithm completes.  For example, we may have a series of TableMult operations 
+for which only the final TableMult is needed as output.  It is therefore wasteful to write the intermediary
+TableMult results to disk if we have room to store them in memory.
+Sometimes one can restructure an algorithm to minimize the use of intermediary tables,
+but a better solution would be to realize a notion of in-memory ``temporary tables'' in Accumulo.
+We leave constructing this notion to future work.
+
+Similarly, it is also useful to \emph{pipeline} TableMults in an algorithm by starting the process 
+that acts on the result of a TableMult before the TableMult finishes.
+Unfortunately, the outer product algorithm cannot guarantee that all partial products for a particular element 
+are written to the result table before the algorithm finishes, since it writes results in chaotic order.
+The inner product algorithm would be easier to pipeline.
+We therefore treat TableMult operations as barriers for operations acting on a TableMult's result.
+
+%% \todo[inline]{Probably remove next paragraph:}
+%% We implemented TableMult logic inside three separate iterators connected via the SortedKeyValueIterator
+%% interface. One technique for increasing performance is \emph{loop fusion}, combining separate components into one
+%% that performs everything in one pass.  We chose to keep our iterators separate because it opens them 
+%% to reuse in other server-side operations and the iterator's processing (including necessary decoding and encoding)
+%% is not our bottleneck. We will be bound by BatchWrite time no matter how well we optimize the iterator processing.
+
+
+
+We have a hunch that a MapReduce implementation using AccumuloInputFormat and AccumuloOutputFormat 
+will outperform our implementation in terms of throughput for large input tables (whole-table analytics)
+but not latency for moderate input tables (queued analytics), due to spinup delay MapReduce jobs experience.
+In either case, using MapReduce requires features in Hadoop clusters outside the 
+Accumulo ecosystem, which may not be an option for some user environments.
+It would be interesting to directly compare a MapReduce implementation in the future.
+
+

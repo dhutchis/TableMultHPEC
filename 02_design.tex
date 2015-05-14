@@ -9,7 +9,7 @@
 Given input matrices $\matr{A}$ of size $n \times m$, $\matr{B}$ of size $m \times p$,
 and operations $\oplus$ and $\otimes$ representing summation and multiplication,
 the matrix multiplication $\matr{A} \,{\oplus}.{\otimes}\, \matr{B} = \matr{C}$, or more shortly $\matr{A}\matr{B} = \matr{C}$,
-defines the entries of result matrix C as 
+defines entries of result matrix C as 
 \[ \matr{C}(i,j) = \bigoplus_{k=1}^m \matr{A}(i,k) \otimes \matr{B}(k,j) \]
 We call intermediary results of $\otimes$ operations \emph{partial products}.
 
@@ -24,12 +24,10 @@ Sparse arithmetic is impossible without these conditions, since in that case zer
 % an optional feature that removes them when encountered.
 
 
-
-There are two well known patterns for performing matrix multiplication: inner product and outer product.
-We study each in terms of how it implements the $\otimes$ component of matrix multiplication,
-deferring the $\oplus$ operation to run on output generated from applying $\otimes$.
-In the pseudocode, `:' stands for ``all positions'' in the spirit of Matlab notation.
-
+We study two well known patterns for matrix multiplication,
+inner and outer product, in terms of how they implement $\otimes$,
+deferring $\oplus$ to run on output generated from applying $\otimes$.
+We use Matlab notation in pseudocode for arrays and indexing.
 
 The more common inner product method runs the following:
 \begin{algorithm}[h]
@@ -103,13 +101,13 @@ This is because the top-level $k$ loop fixes a dimension of both $\matr{A}$ and 
 Once we finish processing a full column of $\matr{A}$ and row of $\matr{B}$,
 we never need to read them again (i.e., we never need to restart the top-level $k$ loop).
 
-In terms of memory usage, outer product works best when we can fit one of the matching row and column in memory.
-If neither fits in memory, then we could still run the algorithm by
-re-reading rows of $\matr{B}$ while streaming through columns of $\matr{A}$ as the loops suggest.
+In terms of memory usage, outer product works best when either the matching row or column fits in memory.
+If neither fits, then we could still run the algorithm by
+re-reading rows of $\matr{B}$ while streaming through columns of $\matr{A}$ 
+(or vice versa by symmetry of $i$ and $k$).
 %as suggested by the second-level loop repeating the third-level loop running through rows of $\matr{B}$.
-Running through columns of $\matr{A}$ instead is possible by symmetry of $i$ and $k$.
 %Storing one row in memory is a much lower cost than storing a whole matrix in memory.
-We may implement the ``no memory assumption'' streaming appraoch in Accumulo by using
+We may implement the ``no memory assumption'' streaming approach in Accumulo by using
 \texttt{deepCopy} SKVI methods to store ``pointers'' to the beginning of rows from table $\matr{B}$
 (or columns of table $\matr{A}$),
 perhaps at the cost of extra disk reads.
@@ -125,8 +123,6 @@ TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 \subsection{TableMult Iterators}
 \label{sTableMult}
 
-
-\todo{I think you have too much here...you can cut things like Java calls}
 We implement SpGEMM with three iterators placed on a BatchScan of table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
 The BatchScanner directs Accumulo to run the iterators on tablets of $\matr{B}$ in parallel.
@@ -158,105 +154,88 @@ and a BatchWriter on result table $\matr{C}$.
 
 \begin{figure}[htb]
 \centering
-\includegraphics[width=3.3in]{TableMultIteratorStack}
+\includegraphics[width=3.2in]{TableMultIteratorStack}
 \caption{Data flow through the TableMult iterator stack}
 \label{fIteratorStackSpGEMM}
 \end{figure}
 
 \subsubsection{RemoteSourceIterator}
-RemoteSourceIterator contains a Scanner that scans an Accumulo table
+RemoteSourceIterator scans an Accumulo table
 (not necessarily in the same cluster) with the same range it is seeked to.
 Clients pass connection information including zookeeper hosts, timeout,
-username, and password to a RemoteSourceIterator via iterator options
-in the form of a \texttt{Map<String,String>}.
+username and password via iterator options. %in the form of a \texttt{Map<String,String>}.
+We leave more secure scan authentication methods to future work,
+although only users with access to the Accumulo instance may see the password in iterator options.
 
-A client may also specify rows and columns to scan via a rowRanges and colFilter option, 
-if not scanning the whole table. We encode the rowRanges option in ``D4M syntax,'' consisting of 
-delimitted row keys and the `:' character to indicate ranges between row keys.
-In our encoding, ``a,:,b,d,f,:,'' translates to the ranges 
-``[a,b\textbackslash{}0), [d,d\textbackslash{}0), [f,$+\infty$).'' The comma used as a delimitter in the example 
-may be any character not present in a row key, and we disallow rows consisting of a single `:'.
-We do not include column family or deeper fields in our encoding and leave them empty, 
-which is ok for our purpose since SpGEMM operates on the Cartesian product of entire rows.
+We also use iterator options to specify row and column subsets, 
+encoding them in a string format similar to that in D4M \cite{kepner2012dynamic}.
+Row subsets are straightforward since Accumulo uses row-oriented indexing.
+Column subsets can be implemented with filter iterators
+but do not improve performance since Accumulo must read every column from disk.
+We encourage users to maintain a tranpose table
+using strategies similiar to the D4M Schema \cite{kepner2013d4m}
+for cases requiring column indexing.
 
-ColFilter is defined similarly to rowRanges, except that we do not allow ranges to occur in the colFilter
-because Accumulo does not index columns.  We may enable ranges anyway in the future by using an Accumulo
-Filter iterator subclass to only return the entries within a column range set.
-Such a feature requires scanning every column and will affect performance if bottlenecked on table reads.
-We encourage users to maintain a tranpose table for cases requiring column indexing.
-
-Scanning a subset of rows in a table is crucial for queued analytics, since those analaytics 
-operate on a graph subset.  However, for simplicity of performance evaluation, 
-our experiments in Section~\ref{sPerformance} multiply whole table inputs.
+Multiplying table subsets is crucial for queued analytics on selected rows.
+However for simpler performance evaluation, 
+our experiments in Section~\ref{sPerformance} multiply whole tables.
 
 \subsubsection{TwoTableIterator}
-TwoTableIterator reads from two iterator sources, one for $\matr{A}$T and one for $\matr{B}$,
+TwoTableIterator reads from two iterator sources, one for $\matr{A^\tr}$ and one for $\matr{B}$,
 and performs the core operations of the outer product algorithm in three phases:
 \begin{enumerate}
-\item Align Rows.  Read entries from table $\matr{A^\tr}$ and $\matr{B}$ until they reside at the beginning of a matching row
-or until one runs out of entries. We skip non-matching rows as they would be multiplied by an all-zero row in the
-opposite table and generate all zero patrial products.
+\item Align Rows.  Read entries from $\matr{A^\tr}$ and $\matr{B}$ until they advance to a matching row
+or one runs out of entries. We skip non-matching rows 
+since they would multiply with an all-zero row that, by Section~\ref{sMatMul}'s assumptions,
+generate all zero patrial products.
 \item Cartesian product. Read both matching rows into an in-memory data structure. 
-Initialize an iterator that emits pairs of entries from the the matching rows' Carteisan product.
+Initialize an iterator that emits pairs of entries from the rows' Carteisan product.
 \item Multiply. Pass pairs of entries to $\otimes$ and emit results. 
 \end{enumerate}
 
-\todo{I think this can be cut}
-In implementing the $\otimes$ operation as ordinary real number multiplication and $\oplus$ as addition,
-we decode Accumulo value byte arrays into Strings and then into \texttt{java.math.BigDecimal}
-objects. BigDecimal enables multiplication to work for very large and very precise real-valued numbers,
-though it may be cumbersome for small integer multiplication. We use BigDecimal anyway since 
-writing result entries is our bottleneck, not iterator processing.
-%found writing data using a BatchWriter to be our primary bottleneck 
+The user defines $\otimes$ by specifying a class that implements a provided ``multiply interface''
+which TwoTableIterator instantiates and calls. 
+For our experiments we implement $\otimes$ as \texttt{java.math.BigDecimal} multiplication
+which guarantees correctness under large or precise real numbers.
+BigDecimal decoding did not noticeably impact performance.
 
 \subsubsection{RemoteWriteIterator}
-RemoteWriteIterator writes entries to a remote Accumulo table using a BatchWriter created on \texttt{init}.
+RemoteWriteIterator writes entries to a remote Accumulo table using a BatchWriter. %created on \texttt{init}.
 Entries do not have to be in sorted order because Accumulo sorts incoming entries as part of its
 standard ingest process. Like RemoteSourceIterator, the client passes connection information 
 for the remote table via iterator options.
 
-\todo{I think this can be cut}
 Barring extreme events such as exceptions in the iterator stack or thread death,
 we designed RemoteWriteIterator to maintain correctness, such that entries generated from
-RemoteWriteIterator's source will be written to the remote table once.
-One way to accomplish this is by performing all BatchWriter operations within a single function call
-before ceding thread contol back to the Accumulo tablet server.  We do this in the \texttt{seek} method,
-streaming every entry from RemoteWriteIterator's source (within the seek range) into a BatchWriter at once, 
-by repeatedly calling the \texttt{getTop} and \texttt{next} methods of its source and \texttt{flush}ing afterward.
-
-
-\todo{I think this can be cut}
-% Not too important but a common concern from some in the Accumulo community:
-We completely close the BatchWriter in a finalize method.
-The JVM does not guarantee calling objects' finalize method before it garbage collects them, 
-but in our experience, the JVM called finalize in every non-extreme circumstance
-and we guarantee correctness even if finalize is not called. Alternatives such as using \texttt{java.lang.ref}
-classes and closing BatchWriters in place of flushing them are open.
-% link: http://books.google.com/books?id=ka2VUBqHiWkC&pg=PA27&lpg=PA27&dq=effective+java+avoid+finalizers&source=bl&ots=yYGkMgn-QZ&sig=o66EY94GVzB3uvNOvj9eLhdI35k&hl=en&sa=X&ei=0nsxUPeHHILp0gHx1oBI&ved=0CGMQ6AEwAg#v=onepage&q=effective%20java%20avoid%20finalizers&f=false
+RemoteWriteIterator's source write to the remote table once.
+We accomplish this by performing all BatchWriter operations within a single function call
+before ceding thread contol back to the Accumulo tablet server.  
 
 A performance concern remains in the case of TableMult over a subset of the input tables' rows 
 that consists of many disjoint ranges, such as 1M ``singleton'' ranges spanning one row each.
 It is inefficient to flush the BatchWriter before returning from each seek call, which happens once per 
 disjoint scan range, and a known Accumulo issue could even crash the tablet server \cite{ACCUMULO-3710}.
-In order to accomodate this case, we ``transfer seek control'' over the desired row range
-subset from the Accumulo tablet server to the RemoteWriteIterator by passing the range objects through 
-iterator options encoded as a D4M range string (see above), as opposed to the usual method of 
-passing range objects to the \texttt{setRanges} BatchScanner method for table $\matr{B}$.
-The RemoteWriteIterator can then traverse all ranges in the desired subset before returning from a seek.
-In the case of multiple tablets for table $\matr{B}$, the RemoteWriteIterator running on each tablet handles 
-the portion of ranges that intersects with the range of keys in its tablet.
+We accomodate this case by ``transfering seek control'' over the desired row range
+subset from the Accumulo tablet server to RemoteWriteIterator by passing the range objects through 
+iterator options using the same techniques as RemoteSourceIterator, as opposed to the usual method of 
+passing range objects to the %\texttt{setRanges} 
+BatchScanner on table $\matr{B}$.
+RemoteWriteIterator then traverses all ranges in the desired subset 
+(within the tablet it runs on) within one call to seek.
+%In the case of multiple tablets for table $\matr{B}$, RemoteWriteIterator running on each tablet handles 
+%the portion of ranges that intersects with the range of keys in its tablet.
 
 We include an option to BatchWrite the result table's transpose in place of or alongside
-the result table. Writing the transpose enables maintenance of transpose indexing for those using the 
-D4M Schema \cite{kepner2013d4m}, as well as facilitating chaining TableMults one after another.
+the result table. Writing the transpose facilitates chaining TableMults one after another
+as well as maintenance of transpose indexing.
 
 \subsubsection{Lazy $\oplus$}
-We lazily perform the $\oplus$ portion of matrix multiplication (i.e., summing partial products)
-by placing a Combiner subclass implementing $\oplus$ logic on the result table at scan, minor and major compaction scopes.
-Thus, $\oplus$ occurs sometime after the RemoteWriteIterator writes partial products to the result table,
-yet necessarily before any entry from the result table may be seen such that we always achieve correctness.
-This could happen in part when Accumulo flushes the result table to a new RFile, when Accumulo compacts RFiles 
-together, or when a client scans the result table. 
+We lazily sum partial products by placing a Combiner subclass implementing BigDecimal addition 
+on table $\matr{C}$ at scan, minor and major compaction scopes.
+Thus, $\oplus$ occurs sometime after RemoteWriteIterator writes partial products to $\matr{C}$
+yet necessarily before entries from $\matr{C}$ may be seen such that we always achieve correctness.
+Summation could happen when Accumulo flushes table $\matr{C}$'s entries cached in memory to a new RFile, 
+when Accumulo compacts RFiles together or when a client scans $\matr{C}$. 
 
 The key algebraic requirement for implementing $\oplus$ inside a Combiner
 is that $\oplus$ must be associative and commutative.
@@ -265,40 +244,26 @@ and on any ordering of them, which is chaotic by the outer product's nature.
 If we truly had an $\oplus$ operation that required seeing all partial products at once,
 we would have to either gather partial products at the client or initiate a full major compaction.
 
-Our choice to defer the $\oplus$ operation 
-
 \subsubsection{Monitoring}
 RemoteWriteIterator never emits entries to the client by default. 
 One downside of this approach is that clients cannot precisely track the progress of a TableMult operation.
 The only information clients would have are scan and write rates from the Accumulo monitor,
 whether a scan is running, idle or queued from the tablet server, and what partial products 
-are written to the result table so far from scanning the result table.
+are written so far from scanning the result table.
 
-We therefore implemented a monitoring option on RemoteWriteIterator that occassionally emits entries
-back to the client at ``safe'' points in the middle of a TableMult, that is,
-at points when the iterator stack may recover its state if Accumulo destroys, later re-creates and re-seeks it
-to a range starting at its last emitted key (exclusive).
-Stopping after emitting the last value in the outer product of two rows is naturally safe, since we may place that row key
-in the emitted monitoring key and know, in the event of an iterator stack rebuild, to proceed to the next matching rows.
-We are also experimenting with an encoding that permits stopping in the middle of an outer product by encoding the 
-column family and qualifier of the rows in the outer product in the emitted monitoring key.
+We therefore implemented a monitoring option that emits a value
+containing the number of entries TwoTableIterator processed
+at a client-set frequency.
+RemoteWriteIterator emits monitoring entries at ``safe'' points, that is,
+points at which we can recover the iterator stack's state 
+if Accumulo destroys, re-creates and re-seeks it.
+%to a range starting from its last emitted key.
+Stopping after emitting the last value in the outer product of two rows is safe 
+because we place the last value's row key in the monitoring key and know, 
+in the event of an iterator stack rebuild, to proceed to the next matching row.
+We are also experimenting with stopping in the middle of an outer product by encoding the 
+column family and qualifier of input tables' keys in the monitoring key.
 
-We control the frequency of emitting monitoring entries by specifying iterator options in terms of how many entries
-before emitting or how long a duration between emitting monitor entries. We encode the number of entries processed so far 
-in the monitoring entry value. Between the key and value, the client can see how far the TableMult operation progressed
-in terms of number of emitted entries and progress in scanning row keys from tables $\matr{A^\tr}$ and $\matr{B}$.
-%The approach scales as further B is split into more and more tablets.
-
-\todo{I think this can be cut}
-
-In order for the client to receive monitoring entries before the TableMult completes,
-we must change the \texttt{table.scan.max.memory} paramter of table $\matr{B}$ to as small a value as possible, say one byte. 
-This forces Accumulo to send entries from the BatchWriteIterator to the client immediately as they are generated.
-We may restore the previous parameter value (default 512KB) once the TableMult compeletes.
-If a proposed change \cite{ACCUMULO-261} is applied to future Accumulo versions,
-we will be able to change the tablet server scan cache on a per-scan basis rather than a per-table basis
-that affects concurrent scans on table $\matr{B}$.
-%not in this paper: gather information within the RemoteWriteIterator to send back to the client
 
 %%\subsubsection{Client API}
 %% The following shows how client programs call TableMult in Java:
