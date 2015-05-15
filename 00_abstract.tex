@@ -1,13 +1,25 @@
 %!TEX root = SpGEMM_Accumulo_HPEC.tex
 \begin{abstract}
-Server-side computation is difficult in Accumulo 
-due to its design for distributed storage and not for general computing,
-yet many big data applications such as enrichment and analytics \todo{use more specific example}
-compute on Accumulo data and persist results back to Accumulo anyway.
-Users must subsequently implement complex clients and shuffle 
-data between Accumulo storage and engines for compute.
-
-In this work we enable SpGEMM, sparse matrix multiplication,
+Databases such as Apache Accumulo excel at distributed storage
+and indexing
+and are ideally suited for graphs.
+%yet are not designed for general computing.
+%However,
+Many big data applications such as enrichment and analytics
+compute on graph data and persist results back to the database.
+%The Graphulo library is designed to take advantage of 
+%Accumulo's graph capabilities
+%Users must subsequently implement complex clients and shuffle 
+%data between Accumulo storage and computing engines.
+%% Server-side computation is difficult in Accumulo 
+%% due to its design for distributed storage and not for general computing,
+%% yet many big data applications such as enrichment and analytics \todo{use more specific example}
+%% compute on Accumulo data and persist results back to Accumulo anyway.
+%% Users must subsequently implement complex clients and shuffle 
+%% data between Accumulo storage and engines for compute.
+In this article, 
+%we propose 
+we enable sparse matrix multiplication
 server-side on Accumulo tables
 by repurposing Accumulo iterators.
 We compare mathematics and performance 

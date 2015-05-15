@@ -34,16 +34,17 @@ because TableMult avoids transfering data out of Accumulo for processing.
 We also expect TableMult to succeed on larger graph sizes than D4M because TableMult
 uses a streaming outer product algorithm that does not store input tables in memory.
 An alternative D4M implementation would mirror TableMult's streaming outer product algorithm,
-enabling D4M to run on larger problem sizes at the cost of worse performance.
+enabling D4M to run on larger problem sizes at potentially worse performance.
 We therefore imagine the whole-table D4M algorithm as an upper bound on the best performance 
 achievable when multiplying Accumulo tables outside Accumulo's infrastructure.
 
-We use the Graph500 power law graph generator \cite{bader2006designing} to create random input tables,
+We use the Graph500 unpermuted power law graph generator \cite{bader2006designing} 
+to create random input tables,
  %also used in 100M insert/sec paper
 such that the first row has high degree (number of columns) 
 %The generator creates graphs with a power law structure, such that the first vertex has high degree
-and subsequent rows have exponentially decreasing degree.
-The generator takes a SCALE and EdgesPerVertex parameter and creates graphs with 2\textsuperscript{SCALE} 
+and subsequent rows exponentially decrease in degree.
+The generator takes SCALE and EdgesPerVertex parameters, creating graphs with 2\textsuperscript{SCALE} 
 rows and EdgesPerVertex $\times$ 2\textsuperscript{SCALE} entries.
 We fix EdgesPerVertex to 16 and use SCALE to vary problem size. 
 
@@ -53,9 +54,9 @@ The following procedure outlines our performance experiment for a given SCALE an
 \item Generate two graphs with different random seeds and insert them into Accumulo as adjacency tables via D4M.
 \item In the case of two tablets, identify an optimal split point for each input graph
 and set the input graphs' table splits equal to that point.
-``Optimal'' here means a split point that nearly evenly divides an input graph into two tablets.
+``Optimal'' here means a split point that evenly divides an input graph into two tablets.
 \item \label{ePreSplit1} Create an empty output table. For two tablets, pre-split it with 
-a pre-recorded optimal input split position.
+an optimal input split position recorded from a previous multiplication run.
 %% the first input table's split.
 %% The split will not be optimal for the output table because the matrix product has a different degree distribution 
 %% than that of the input tables, but it is close enough for the purposes of our test.
@@ -69,7 +70,7 @@ as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
  \item Scan both input tables into D4M Associative Array objects in Matlab memory.
  \item Convert the string values from Accumulo into numeric values for each Assoc.
  \item Multiply the transpose of the first Assoc with the second Assoc.
- \item Convert the result Assoc back to String values and insert it into Accumulo.
+ \item Convert the result Assoc back to String values and insert them into Accumulo.
  \end{enumerate}
 \end{enumerate}
 

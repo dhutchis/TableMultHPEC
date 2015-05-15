@@ -38,12 +38,15 @@ The more common inner product method runs the following:
 \SetKw{emit}{emit}
 \fore($i = 1\col n$){
 \fore($j = 1\col p$){
-\emit{$\matr{A}(i,:) \cdot \matr{B}(:,j)$}
+\emit{$\matr{A}(i,:)  \matr{B}(:,j)$}
 }}
 \vspace{\algspace}
 \end{algorithm}
 
-\noindent where the operation $\cdot$ is inner (also called dot) product on vectors, which we may unfold as
+\noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
+performing inner %(also called dot) 
+product on vectors with summation deferred,
+which we unfold as
 
 \removelatexerror
 \begin{algorithm}[H]
@@ -58,15 +61,16 @@ The more common inner product method runs the following:
 \vspace{\algspace}
 \end{algorithm}
 
-Inner product has an advantage of generating output ``in order,'' meaning that all partial products needed 
+Inner product has an advantage of generating entries in sorted order, meaning that all partial products needed 
 to compute a particular element $\matr{C}(i,j)$ are generated consecutively by the third-level loop.
-We may apply the $\oplus$ operation immediately after each third-level loop and obtain an element in $\matr{C}$.
+We may apply $\oplus$ immediately after each third-level loop to obtain an element in $\matr{C}$.
 This means that inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
 locally before sending entries to a remote but globally-aware table combiner.
 % move to another section?
 %Inner product also generates output ``in order'' in a second sense: 
-It is also adventageous that inner product generates entries sorted by row 
-and column, which allows inner product to be used in standard iterator stacks that require sorted output.
+Emitting sorted entries also allows inner product to be used in standard iterator stacks.
+%% It is also adventageous that inner product generates entries sorted by row 
+%% and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
 Despite its order-preserving advantages, we chose not to implement inner product 
 because it requires multiple passes:
@@ -75,9 +79,10 @@ repeats for each row of $\matr{A}$ from the top-level loop iteration.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
 multiple passes over $\matr{B}$ translates to multiple Accumulo scans that each require a disk read.
-We found in our performance tests that multiple scans over $\matr{B}$ 
-performed over an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs
-whereas the outer product method ran in under 8 seconds.
+We found in performance tests that multiple scans over $\matr{B}$ 
+performed an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs 
+(see Section~\ref{sPerformance})
+whereas an outer product method ran in under 8.
 
 Outer product matrix multiply runs the following:
 
@@ -87,12 +92,16 @@ Outer product matrix multiply runs the following:
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
 \fore($k = 1\col m$){
-\emit{$\matr{A}(:,k) \times \matr{B}(k,:)$}
+\emit{$\matr{A}(:,k) \matr{B}(k,:)$}
 }
 \vspace{\algspace}
 \end{algorithm}
 
-\noindent where the operation $\times$ is outer (also called tensor or Carteisan) product on vectors, which we may unfold as
+\noindent %deferring outer product's summation, which we unfold as %where the operation $\times$ is outer (also called tensor or Carteisan) product on vectors, which we may unfold as
+performing outer %(also called tensor or Cartesian) 
+product
+on vectors with summation deferred, 
+which we unfold as
 
 \removelatexerror
 \begin{algorithm}[H]

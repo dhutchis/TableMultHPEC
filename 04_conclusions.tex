@@ -9,9 +9,9 @@ Bulu\c{c} and Gilbert studied message passing algorithms for SpGEMM
 such as Sparse SUMMA, most of which use 2D block decompositions \cite{buluc2012parallel}.
 Unfortunately, 2D decompositions are difficult in Accumulo 
 and message passing even more so.
-In this work we use Accumulo's native 1D decomposition along rows 
-and no tablet server communication
-other than shuffling partial products to tablets of $\matr{C}$ via BatchWriters.
+In this work, we use Accumulo's native 1D decomposition along rows 
+and do not rely on tablet server communication
+apart from shuffling partial products of $\matr{C}$ via BatchWriters.
 
 
 Our outer product method could have been implemented in MapReduce %x\cite{dean2008mapreduce} 
@@ -21,25 +21,63 @@ the map phase scans rows from $\matr{A^\tr}$ and $\matr{B}$
 and generates a list of partial products from TwoTableIterator;
 the shuffle phase sends partial products to the correct tablets of $\matr{C}$ via BatchWriters;
 the reduce phase sums partial products using Combiners.
-Examining the conditions on which MapReduce outperforms Accumulo-only solutions
+Examining the conditions on which MapReduce 
+reading from and writing to Accumulo's RFiles directly
+outperforms Accumulo-only solutions
 is worthy future work.
 
 %TableMult Design Alternatives
-A common Accumulo pattern is to %run multiple clients %that scan disjoint and continuous table sections in parallel.
-scan and write from multiple clients in parallel.
-In fact, the current insert rate record was set by using 
-parallel clients and tablet location info \cite{kepner2014achieving}.
-%% Kepner et al used parallel clients and tablet location info
-%% to insert at record-setting rates \cite{kepner2014achieving}.
+%% A common Accumulo pattern is to %run multiple clients %that scan disjoint and continuous table sections in parallel.
+%% scan and write from multiple clients in parallel.
+%% %In fact, 
+%% The high insert rates of \cite{kepner2014achieving}
+%% were obtained using 
+%% parallel clients aware of tablet locations.
+%% %% Kepner et al used parallel clients and tablet location info
+%% %% to insert at record-setting rates \cite{kepner2014achieving}.
 
-We avoid the multiple client pattern because it increases client software complexity,
-whereas we aim for a service within Accumulo that works for any client.
-Perhaps more importantly, previous work has shown that table scans 
-that do not perform significant iterator processing %filtering or other server-side computation 
-bottleneck on communication overhead at the client related to Apache Thrift serialization \cite{sawyer2013understanding}.
-We gain a chance to eliminate this overhead by moving computation to the server,
-though we do not currently do so as we use standard Scanners and BatchWriters.
+A common Accumulo pattern is to 
+scan and write from multiple clients in parallel,
+and in fact researchers obtained 
+high insert rates using parallel client strategies \cite{kepner2014achieving}.
+We chose to build Graphulo as a service within Accumulo
+instead of assuming multiple client capability,
+such that Graphulo is as accessible as possible to diverse client environments.
 
+The strategy in \cite{kepner2014achieving} 
+also used %information on tablet assginment to tablet servers
+%physical 
+tablet location information
+to determine where clients could write locally.
+Knowing tablet to tablet server assignment could likewise aid Graphulo, 
+not only to minimize network traffic
+but also
+ to partly eliminate Apache Thrift RPC serialization,
+which prior work has shown is a bottleneck for scans % writes?
+when iterator processing is light \cite{sawyer2013understanding}.
+%Enhancing Accumulo for non-Thrift, local access may 
+Such an enhancement would access a local tablet server by method call 
+in place of Scanners and BatchWriters.
+%use a new access inter-process chanel 
+%optimized for 
+
+%% %% In order to make Graphulo as accessible to client environments %configurations
+%% %% as possible, we built Graphulo as a service within Accumulo 
+%% %% instead of assuming multiple client capabilities.
+%% %%% We avoid the multiple client pattern because it increases client software complexity,
+%% %%% whereas we aim for a service within Accumulo that works for any client.
+%% As described in \cite{sawyer2013understanding}, 
+%% table scans that do not perform significant iterator processing
+%% bottleneck on communication overhead at the client due to Apache Thrift serialization.
+%% %% %filtering or other server-side computation 
+%% %% Future work may eliminate this bottleneck by 
+%% %% avoiding 
+%% % avoid RPCs
+%% % local tablet location information
+%% %We gain a chance to eliminate Thrift overhead %by moving computation to the server,
+%% Future work may eliminate Thrift overhead
+%% for scans and writes to tablets located on the same tablet server.
+%% %though the current version does not do so because standard Scanners and BatchWriters serialize as clients would.
 
 \subsection{Design Alternative: Inner-Outer Product Hybrid}
 
@@ -67,7 +105,7 @@ Is it possible to blend inner and outer product SpGEMM methods,
 choosing a middle point in Figure~\ref{fInnerOuterSpectrum}
 with equal read and write bottlenecks for overall greater performance?
 In the following generalization, 
-free parameter $P$ varies behavior between
+partition parameter $P$ varies behavior between
 inner product at $P=n$ and outer product at $P=1$:
 
 \removelatexerror
@@ -134,11 +172,12 @@ because it cannot guarantee all partial products for any particular element
 are written to table $\matr{C}$ until it finishes.
 Inner product's write locality makes it easier to pipeline.
 More ambitiously, a \emph{loop fusion} optimization merges iterator stacks 
-for two computations into one. 
+for successive computations into one. 
 
 Optimizing computation on NoSQL databases is challenging in the general case because
 NoSQL databases mostly exclude query planner features 
 customary of SQL databases in exchange for raw performance.
+% and simplicity of implementation
 NewSQL databases aim in part to achieve the best of both worlds---performance and query planning \cite{grolinger2013data}.
 We aspire to make a small step for Accumulo in the direction of NewSQL with current Graphulo research.
 
