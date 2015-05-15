@@ -51,6 +51,24 @@
 \newcommand{\tr}[0]{{\intercal}} %\!
 \newcommand{\col}[0]{\colon\!}
 
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\DeclarePairedDelimiter\paren{\left(}{\right)}
+
+% to allow [H] for algorithms
+% https://tex.stackexchange.com/questions/82271/multiple-algorithm2e-algorithms-in-two-column-documents/82272#82272
+\makeatletter
+\newcommand{\removelatexerror}{\let\@latex@error\@gobble}
+\makeatother
+
+% vspace above and below inline algorithms
+\newlength{\algspace}
+\setlength{\algspace}{2pt}
+
+% MACROS:
+%\newcommand{\numparties}{\ensuremath{\mathcal{P}}}
+
 \begin{document}
 
 \title{Graphulo: Server-side Matrix Multiply\\on Accumulo Tables}
@@ -63,12 +81,12 @@
 %% \{vijayg, kepner, bamiller\}@ll.mit.edu}}
 
 \author[D. Hutchison et al.]
-       {Dylan Hutchison$^1$, Jeremy Kepner$^{1,2,3}$, Vijay Gadepally$^{1,2}$, Adam Fuchs$^4$\\
+       {Dylan Hutchison,$^1$ Jeremy Kepner,$^{1,2,3}$ Vijay Gadepally,$^{1,2}$ Adam Fuchs$^4$\vspace{6pt}
          \\
          $^1$MIT Lincoln Laboratory BeaverWorks\\
          $^2$MIT Computer Science and Artificial Intelligence Laboratory\\
          $^3$MIT Mathematics Department\\
-         $^4$Sqrrl\\
+         $^4$Sqrrl \vspace{-1em}
        }
 
 %% \author[*,$\dagger$]{Dylan Hutchison\thanks{dhutchis@mit.edu}}
@@ -106,12 +124,7 @@
     supported by the National Science Foundation under Grant
     No. DMS-1312831. Opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
 }}
-
 \setcounter{footnote}{0}
-
-% MACROS:
-\newcommand{\numparties}{\ensuremath{\mathcal{P}}}
-
 \input{00_abstract.tex}
 
 % For peerreview papers, this IEEEtran command inserts a page break and
@@ -122,7 +135,6 @@
 \input{01_introduction.tex}
 \input{02_design.tex}
 \input{03_performance.tex}
-
 \begin{table*}[tb]                                                                                            
 \centering                                                                                                           
 \caption{Output Table $\matr{C}$ Sizes and Experiment Timings}% plotted in Figure~\ref{fTableMultPerf}}

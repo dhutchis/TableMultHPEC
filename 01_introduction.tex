@@ -63,7 +63,7 @@ approach that can distribute with Accumulo's infrastructure.
 % we never assume a table fits in memory
 % and instead take a streaming approach that distributes with Accumulo's infrastructure.
 
-We are particularly interested in SpGEMM for queued analytics, that is, analytics on a selected table subset.  
+We are particularly interested in SpGEMM for queued analytics, that is, analytics on selected table subsets.  
 Queued analytics maximally leverage Accumulo as a database 
 by quickly accessing subsets of interest, 
 whereas whole-table analytics usually perform better on parallel file systems such as Lustre or Hadoop.
@@ -91,7 +91,7 @@ concluding in Section~\ref{sConclusions}.
 
 
 
-\subsection{Primer: Accumulo and the Iterator Stack}
+\subsection{Primer: Accumulo and its Iterator Stack}
 \label{sAccumuloIterators}
 %key, value, entry, tablet
 Accumulo stores data in Hadoop as byte arrays decomposed into (key, value) pairs called entries.
@@ -123,13 +123,13 @@ However, they are also more powerful than Java iterators in that they can seek t
 in the data stream (top-level system iterators perform actual disk seeks).
 
 A special caveat to iterator stacks is that Accumulo may destroy, re-create 
-and re-seek them to their last emitted key between any function call.
+and re-seek them to their last emitted key between function calls.
 Accumulo does this when it needs to switch data sources after a compaction, 
 when a client stops requesting data, or out of fairness to concurrent scans.
 Iterators have no \texttt{close} method that would grant them the lifecycle control to clean up state
 before Accumulo destroys them, and so the only safe way for an 
 iterator to use state requiring cleanup (such as opening a file or starting a thread)
-is to clean up state before returning from any method call.
+is to clean up state before returning from any call.
 Ideas discussed in \cite{ACCUMULO-3751} may lax this restriction for future Accumulo versions.
 
 %\1 Iterators are most commonly used for streaming computation in the sense that iterators
@@ -137,8 +137,8 @@ Ideas discussed in \cite{ACCUMULO-3751} may lax this restriction for future Accu
 
 Iterators are most commonly used for ``reduction'' operations that transform
 or eliminate entries passing through.  The Accumulo community generally discourages ``generator'' iterators 
-that emit new entries not present in original data sources, not because generator iterators are impossible 
-but because they are easy to misuse and violate SKVI constraints by emitting entries out of order or 
+that emit new entries not present in original data sources %, not because generator iterators are impossible but
+because they are easy to misuse and violate SKVI constraints by emitting entries out of order or 
 relying on volatile state.
 In this work we suggest a new pattern for iterator usage as a conduit for client write operations 
 that achieves the benefits of generator iterators while avoiding their constraints.

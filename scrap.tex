@@ -137,3 +137,23 @@ Accumulo ecosystem, which may not be an option for some user environments.
 It would be interesting to directly compare a MapReduce implementation in the future.
 
 
+
+A definitive answer is future research, though we sketch one possible bridge in Figure~\ref{fInnerOuterSpectrum}.
+Suppose we partition the rows of $\matr{A}$ (columns of $\matr{A^\tr}$) into two halves 
+and run outer product on each separately.
+Each outer product requires one scan over $\matr{B}$ for a total of two passes.
+In exchange we increase write locality:
+the top half outer product only writes to the top half of $\matr{C}$ and 
+the bottom half outer product only writes to the bottom half of $\matr{C}$.
+%We could do the same process on table $\matr{B}$ by symmetry.
+Selecting the number of partitions along rows of $\matr{A}$ determines
+balance between inner product (partitions between every row) and outer product (zero partitions).
+
+
+
+%% Clients pass connection information including zookeeper hosts, timeout,
+%% username and password via iterator options. %in the form of a \texttt{Map<String,String>}.
+%% We leave more secure scan authentication methods to future work,
+%% although only users with access to the Accumulo instance may see the password in iterator options.
+
+
