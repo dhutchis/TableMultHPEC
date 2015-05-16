@@ -29,7 +29,7 @@ D4M stores tables as Associative Array objects in Matlab, written as Assocs for 
 Because Assoc multplication runs fast in memory, 
 D4M bottlenecks on reading data from Accumulo and especially on writing back results.
 We consequently expect TableMult to outperform D4M 
-because TableMult avoids transfering data out of Accumulo for processing. 
+because TableMult avoids transferring data out of Accumulo for processing. 
 
 We also expect TableMult to succeed on larger graph sizes than D4M because TableMult
 uses a streaming outer product algorithm that does not store input tables in memory.
@@ -120,13 +120,14 @@ We could not run the D4M comparison past SCALE 15 because $\matr{C}$ does not fi
 In terms of weak scaling, the best results we could achieve are flat horizontal lines, 
 indicating that we maintain the same level of operations per second as problem size increases.
 Graphulo roughly achieves weak scaling, although the two-tablet Graphulo curve 
-shows some instability.
+shows instability.
 
 One reason we see a downward rate trend at larger problem sizes is that Accumulo
-needs to minor compact table $\matr{C}$ in the middle of a TableMult. This in turn triggers 
-the $\oplus$ Combiner to sum partial products written to $\matr{C}$ so far
-along with flushes to disk, neither of which are included
-in our rate measurements. % (in partial products per second).
+needs to minor compact table $\matr{C}$ in the middle of a TableMult. 
+The compactions trigger flushes to disk along with 
+the $\oplus$ Combiner that sums partial products written to $\matr{C}$ so far, 
+neither of which we include 
+in rate measurements. % (in partial products per second).
 %% Thus, one explanation for the rate decrease is that 
 %% our rate measurements (in partial products per second) do not include summing 
 %% and disk flush operations Accumulo performs during minor compaction.

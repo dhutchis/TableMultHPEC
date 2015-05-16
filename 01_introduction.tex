@@ -94,11 +94,11 @@ concluding in Section~\ref{sConclusions}.
 \subsection{Primer: Accumulo and its Iterator Stack}
 \label{sAccumuloIterators}
 %key, value, entry, tablet
-Accumulo stores data in Hadoop as byte arrays decomposed into (key, value) pairs called entries.
-Keys decompose further into rows, column families, qualifiers, visibilities and timestamps,
-though we mainly consider rows and column qualifiers in this work.
+Accumulo stores data in Hadoop RFiles as byte arrays indexed by key in (key, value) pairs called entries.
+Keys decompose further into row, column family, qualifier, visibilitiy and timestamp,
+though we mainly consider row and column qualifier in this work.
 Entries belong to tables that Accumulo divides into tablets and assigns to tablet servers.
-Clients write new entries via BatchWriters and retrieve stored entries from tablets sequentially via Scanners
+Clients write new entries via BatchWriters and retrieve entries from tablets sequentially via Scanners
 or in parallel via BatchScanners.
 
 Accumulo's server-side programming model runs an \emph{iterator stack} on each tablet in range of a scan, 
@@ -119,7 +119,7 @@ distributed parallelism for free as Accumulo runs their iterators on relevant ta
 
 SKVIs are reminiscent of built-in Java iterators in that they hold state 
 and emit one entry at a time until finished iterating.
-However, they are also more powerful than Java iterators in that they can seek to a specific position
+However, they are more powerful than Java iterators in that they can seek to a specific position
 in the data stream (top-level system iterators perform actual disk seeks).
 
 A special caveat to iterator stacks is that Accumulo may destroy, re-create 
@@ -137,9 +137,9 @@ Ideas discussed in \cite{ACCUMULO-3751} may lax this restriction for future Accu
 
 Iterators are most commonly used for ``reduction'' operations that transform
 or eliminate entries passing through.  The Accumulo community generally discourages ``generator'' iterators 
-that emit new entries not present in original data sources %, not because generator iterators are impossible but
+that emit new entries not present in data sources %, not because generator iterators are impossible but
 because they are easy to misuse and violate SKVI constraints by emitting entries out of order or 
 relying on volatile state.
-In this work we suggest a new pattern for iterator usage as a conduit for client write operations 
+In this work, we suggest a new pattern for iterator usage as a conduit for client write operations 
 that achieves the benefits of generator iterators while avoiding their constraints.
 

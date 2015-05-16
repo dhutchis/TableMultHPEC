@@ -16,14 +16,14 @@ apart from shuffling partial products of $\matr{C}$ via BatchWriters.
 
 Our outer product method could have been implemented in MapReduce %x\cite{dean2008mapreduce} 
 on Hadoop or its successor YARN \cite{vavilapalli2013apache}.
-In fact, there is a natural analogy from TableMult to MapReduce:
+There is a natural analogy from TableMult to MapReduce:
 the map phase scans rows from $\matr{A^\tr}$ and $\matr{B}$
 and generates a list of partial products from TwoTableIterator;
-the shuffle phase sends partial products to the correct tablets of $\matr{C}$ via BatchWriters;
+the shuffle phase sends partial products to correct tablets of $\matr{C}$ via BatchWriters;
 the reduce phase sums partial products using Combiners.
 Examining the conditions on which MapReduce 
 reading from and writing to Accumulo's RFiles directly
-outperforms Accumulo-only solutions
+can outperform Accumulo-only solutions
 is worthy future work.
 
 %TableMult Design Alternatives
@@ -37,9 +37,9 @@ is worthy future work.
 %% %% to insert at record-setting rates \cite{kepner2014achieving}.
 
 A common Accumulo pattern is to 
-scan and write from multiple clients in parallel,
-and in fact researchers obtained 
-high insert rates using parallel client strategies \cite{kepner2014achieving}.
+scan and write from multiple clients in parallel;
+in fact, researchers obtained 
+considerably high insert rates using parallel client strategies \cite{kepner2014achieving}.
 We chose to build Graphulo as a service within Accumulo
 instead of assuming multiple client capability,
 such that Graphulo is as accessible as possible to diverse client environments.
@@ -49,7 +49,7 @@ also used %information on tablet assginment to tablet servers
 %physical 
 tablet location information
 to determine where clients could write locally.
-Knowing tablet to tablet server assignment could likewise aid Graphulo, 
+Knowing tablet-to-tablet-server assignment could likewise aid Graphulo, 
 not only to minimize network traffic
 but also
  to partly eliminate Apache Thrift RPC serialization,
@@ -94,7 +94,7 @@ Outer product reads inputs in a single pass
 but emits entries out of order and has little chance to pre-sum, 
 instead writing individual partial products to $\matr{C}$.
 Table~\ref{tResultsParams} quantifies that outer product writes
-2.5 to 3 times that of inner product for power law inputs.
+2.5 to 3 times more entries than inner product for power law inputs.
 In the worst case, multiplying a fully dense $n \times m$ with an $m \times p$ matrix,
 outer product emits $m$ times more entries than inner product.
 
@@ -132,13 +132,13 @@ as well as how many positions of $\matr{C}$ the TableMult iterators cache.
 Figure~\ref{fInnerOuterSpectrum}'s center depicts the $P=2$ case.
 
 \begin{figure}[htb]
-%\vspace{-6pt}
+\vspace{-4pt}
 \centering
 \includegraphics[width=\linewidth]{InnerOuterSpectrum}
-\vspace{-12pt}
+\vspace{-14pt}
 \caption{Tradeoffs between Inner and Outer Product}
 \label{fInnerOuterSpectrum}
-\vspace{-6pt}
+%\vspace{-2pt}
 \end{figure}
 
 
@@ -157,21 +157,26 @@ given limited data layout control and unknown data distribution.
 %% Accumulo's internal state and non-public API.
 %% We suggest this paper's approach as a balance between top performance and implementation stability.
 
+Nevertheless, possible design criteria are to minimize $P$ in order to minimize passes through $\matr{B}$,
+while also choosing $P$ large enough so that $\ceil{\frac{np}{P}}$ entries fit in memory
+(dense matrix worst case), which guarantees complete pre-summing.
+The latter criterion may be relaxed with decreasing matrix density.
+
 
 \subsection{TableMult in Algorithms}
 Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
 Suppose we have a program $\matr{E} = \matr{AB}; \matr{F} = \matr{CD}; \matr{G} = \matr{EF}$.
 We would save two round trips to disk if we could mark $\matr{E}$ and $\matr{F}$ as 
-``temporary tables,'' i.e. intermediate tables to an algorithm that should be held in memory 
+``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
 and not written to Hadoop if possible.
 
 A \emph{pipelining} optimization streams entries from a TableMult 
 to computations taking its result as input. 
 Outer product pipelining is difficult
-because it cannot guarantee all partial products for any particular element 
-are written to table $\matr{C}$ until it finishes.
-Inner product's write locality makes it easier to pipeline.
-More ambitiously, a \emph{loop fusion} optimization merges iterator stacks 
+because it cannot guarantee writing every partial product for a particular element 
+ to $\matr{C}$ until it finishes,
+whereas inner product's complete pre-summing emits elements ready for downstream use.
+More ambitiously, \emph{loop fusion} merges iterator stacks 
 for successive computations into one. 
 
 Optimizing computation on NoSQL databases is challenging in the general case because
@@ -196,7 +201,8 @@ better fits Accumulo's iterator model.
 Performance experiments show good weak scaling and hint at strong scaling,
 although repeating experiments on a larger cluster is necessary to confirm.
 
-Current research is to implement the remaining GraphBLAS kernels 
+Current research in addition to topics from Section~\ref{sDiscussion}'s discussion, 
+is to implement the remaining GraphBLAS kernels 
 and develop algorithms calling them, % atop the Graphulo library,
 ultimately delivering a Graphulo linear algebra library 
 as a pattern for server-side computation

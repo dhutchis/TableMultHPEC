@@ -9,14 +9,14 @@
 Given matrices $\matr{A}$ of size $n \times m$, $\matr{B}$ of size $m \times p$,
 and operations $\oplus$ and $\otimes$ for summation and multiplication,
 the matrix product $\matr{A} \,{\oplus}.{\otimes}\, \matr{B} = \matr{C}$, or more shortly $\matr{A}\matr{B} = \matr{C}$,
-defines entries of result matrix C as 
+defines entries of result matrix $\matr{C}$ as 
 \[ \matr{C}(i,j) = \bigoplus_{k=1}^m \matr{A}(i,k) \otimes \matr{B}(k,j) \]
 We call intermediary results of $\otimes$ operations \emph{partial products}.
 
 In the case of sparse matrices, we only perform $\oplus$ and $\otimes$ where both operands are nonzero,
 an optimization stemming from requiring that 0 is an additive identity of $\oplus$ such that $a \oplus 0 = 0 \oplus a = a$,
 and that 0 is a multiplicative annhilator of $\otimes$ such that $a \otimes 0 = 0 \otimes a = 0$.
-Sparse arithmetic is impossible without these conditions, since in that case zero operands could generate nonzero results.
+Sparse arithmetic is impossible without these conditions, since zero operands could then generate nonzero results.
 
 % In Accumulo, zero elements are entries that do not exist in a table. Entries that actually contain the value zero may exist
 % from an operation producing a zero value (such as summing partial products 5, -3 and -2).  
@@ -100,7 +100,7 @@ Outer product matrix multiply runs the following:
 \noindent %deferring outer product's summation, which we unfold as %where the operation $\times$ is outer (also called tensor or Carteisan) product on vectors, which we may unfold as
 performing outer %(also called tensor or Cartesian) 
 product
-on vectors with summation deferred, 
+on vectors, 
 which we unfold as
 
 \removelatexerror
@@ -123,14 +123,14 @@ below the top-level $k$ loop.
 
 On the other hand, outer product only requires a single pass over both input matrices.
 This is because the top-level $k$ loop fixes a dimension of both $\matr{A}$ and $\matr{B}$.
-Once we finish processing a full column of $\matr{A}$ and row of $\matr{B}$,
-we never need to read them again (i.e., we never need to restart the top-level $k$ loop).
+Once we finish processing a column of $\matr{A}$ and row of $\matr{B}$,
+we never need read them again.% (i.e., we never need to restart the top-level $k$ loop).
 
 In terms of memory usage, outer product works best when either the matching row or column fits in memory.
 If neither fits, then we could run the algorithm 
 with a ``no memory assumption'' streaming approach
 by re-reading $\matr{B}$'s rows while streaming through $\matr{A}$'s columns 
-(or vice versa by symmetry of $i$ and $k$),
+(or vice versa by symmetry of $i$ and $j$),
 perhaps at the cost of extra disk reads.
 %% %as suggested by the second-level loop repeating the third-level loop running through rows of $\matr{B}$.
 %% %Storing one row in memory is a much lower cost than storing a whole matrix in memory.
@@ -246,13 +246,14 @@ its source write to the remote table once.
 We accomplish this by performing all BatchWriter operations within a single function call
 before ceding thread contol back to the tablet server.  
 
-A performance concern remains in the case of TableMult over a subset of the input tables' rows 
-that consists of many disjoint ranges, such as 1M ``singleton'' ranges spanning one row each.
+A performance concern remains when multiplying a subset of the input tables' rows 
+that consists of many disjoint ranges, such as one million ``singleton'' ranges spanning one row each.
 It is inefficient to flush the BatchWriter before returning from each seek call, which happens once per 
 disjoint scan range. %, and a known Accumulo issue could even crash the tablet server \cite{ACCUMULO-3710}.
-We accomodate this case by ``transfering seek control'' %over desired row range subsets
-from the tablet server to RemoteWriteIterator by encoding range objects in
-iterator options. %using the same technique RemoteSourceIterator uses, 
+We accomodate this case by ``transferring seek control'' %over desired row range subsets
+from the tablet server to RemoteWriteIterator 
+via the same strategy used in RemoteSourceIterator for seeking within an iterator.
+%by encoding range objects in iterator options. %using the same technique RemoteSourceIterator uses, 
 %% as opposed to the usual method of 
 %% passing range objects to the %\texttt{setRanges} 
 %% BatchScanner on $\matr{B}$.
@@ -275,8 +276,8 @@ when Accumulo compacts RFiles together or when a client scans $\matr{C}$.
 
 The key algebraic requirement for implementing $\oplus$ inside a Combiner
 is that $\oplus$ must be associative and commutative.
-These properties allow us to perform $\oplus$ on subsets of a result element's partial products 
-and on any ordering of them, which is chaotic by the outer product's nature.
+These properties allow us to apply $\oplus$ to subsets of a result element's partial products 
+and to any ordering of them, which is chaotic by outer product's nature.
 If we truly had an $\oplus$ operation that required seeing all partial products at once,
 we would have to either gather partial products at the client or initiate a full major compaction.
 
