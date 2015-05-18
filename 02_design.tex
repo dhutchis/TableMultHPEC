@@ -26,9 +26,9 @@ Sparse arithmetic requires these conditions, because otherwise zero operands cou
 
 We study two well known patterns for computing matrix multiplication:
 inner-product and outer-product \cite{kruskal1989techniques}. They differ in the order in which they perform
-the $\otimes$ and $\oplus$ operations.  The more common inner-product approach computes each
-$\matr{C}(i,j)$ at once by computing the product of the row vector $\matr{A}(i,:)$ with
-the column vector $\matr{B}(:,j)$
+the $\otimes$ and $\oplus$ operations.  The more common inner-product approach runs the following %computes 
+%each $\matr{C}(i,j)$ at once by computing the product of the row vector $\matr{A}(i,:)$ with
+%the column vector $\matr{B}(:,j)$
 
 \removelatexerror
 \begin{algorithm}[H]
@@ -43,8 +43,10 @@ the column vector $\matr{B}(:,j)$
 \end{algorithm}
 
 %\noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
-\todo{It is not desirable to defer $\oplus$ because it means we write more individual entries to C.}
-In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$ (using Accumulo's builtin summing combiners), the above approach can be rewritten as
+%\todo{It is not desirable to defer $\oplus$ because it means we write more individual entries to C.}
+%In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$% (using Accumulo's builtin summing combiners), the above approach can be rewritten as
+\noindent computing each $\matr{C}(i,j)$ at once by performing inner product on vectors.
+For the purpose of comparison, we rewrite the above approach with addition deferred as
 
 \removelatexerror
 \begin{algorithm}[H]

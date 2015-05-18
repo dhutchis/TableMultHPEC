@@ -124,7 +124,7 @@ inner product at $P=N$ and outer product at $P=1$:
 \end{algorithm}
 
 The hybrid algorithm runs $P$ passes through $\matr{B}$,
-each of which has write locality to a vertical partition of $\matr{C}$ of length $\ceil{N / P}$.
+each of which has write locality to a vertical partition of $\matr{C}$ of size $N/P \times L$.
 Pre-summing ability likewise varies inversely with $P$, 
 though actual pre-summing depends on
 $\matr{A}$ and $\matr{B}$'s  sparsity distribution
