@@ -6,17 +6,17 @@
 
 \subsection{Matrix Multiplication}
 \label{sMatMul}
-Given matrices $\matr{A}$ of size $n \times m$, $\matr{B}$ of size $m \times p$,
-and operations $\oplus$ and $\otimes$ for summation and multiplication,
-the matrix product $\matr{A} \,{\oplus}.{\otimes}\, \matr{B} = \matr{C}$, or more shortly $\matr{A}\matr{B} = \matr{C}$,
+Given matrices $\matr{A}$ of size $N \times M$, $\matr{B}$ of size $M \times L$,
+and operations $\oplus$ and $\otimes$ for elementwise addition and multiplication,
+the matrix product $\matr{C} = \matr{A} \,{\oplus}.{\otimes}\, \matr{B} $, or more shortly $\matr{C} = \matr{A}\matr{B}$,
 defines entries of result matrix $\matr{C}$ as 
-\[ \matr{C}(i,j) = \bigoplus_{k=1}^m \matr{A}(i,k) \otimes \matr{B}(k,j) \]
+\[ \matr{C}(i,j) = \bigoplus_{k=1}^M \matr{A}(i,k) \otimes \matr{B}(k,j) \]
 We call intermediary results of $\otimes$ operations \emph{partial products}.
 
 In the case of sparse matrices, we only perform $\oplus$ and $\otimes$ where both operands are nonzero,
 an optimization stemming from requiring that 0 is an additive identity of $\oplus$ such that $a \oplus 0 = 0 \oplus a = a$,
 and that 0 is a multiplicative annhilator of $\otimes$ such that $a \otimes 0 = 0 \otimes a = 0$.
-Sparse arithmetic is impossible without these conditions, since zero operands could then generate nonzero results.
+Sparse arithmetic requires these conditions, otherwise zero operands could then generate nonzero results.
 
 % In Accumulo, zero elements are entries that do not exist in a table. Entries that actually contain the value zero may exist
 % from an operation producing a zero value (such as summing partial products 5, -3 and -2).  
@@ -24,47 +24,44 @@ Sparse arithmetic is impossible without these conditions, since zero operands co
 % an optional feature that removes them when encountered.
 
 
-We study two well known patterns for matrix multiplication,
-inner and outer product, in terms of how they implement $\otimes$,
-deferring $\oplus$ to run on output generated from applying $\otimes$.
-We use Matlab notation in pseudocode for arrays and indexing.
-
-The more common inner product method runs the following:
+We study two well known patterns for computing matrix multiplication:
+inner-product and outer-product \cite{kruskal1989techniques}. They differ in the order in which they perform
+the $\otimes$ and $\oplus$ operations.  The more common inner-product approach computes each
+$\matr{C}(i,j)$ at once by computing the product of the row vector $\matr{A}(i,:)$ with
+the column vector $\matr{B}(:,j)$
 
 \removelatexerror
 \begin{algorithm}[H]
 \vspace{\algspace}
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($i = 1\col n$){
-\fore($j = 1\col p$){
+\fore($i = 1\col N$){
+\fore($j = 1\col L$){
 \emit{$\matr{A}(i,:)  \matr{B}(:,j)$}
 }}
 \vspace{\algspace}
 \end{algorithm}
 
 \noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
-performing inner %(also called dot) 
-product on vectors with summation deferred,
-which we unfold as
+In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$ (using Accumulo's builtin summing combiners), the above approach can be rewritten as
 
 \removelatexerror
 \begin{algorithm}[H]
 \vspace{\algspace}
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($i = 1\col n$){
-\fore($j = 1\col p$){
-\fore($k = 1\col m$){
+\fore($i = 1\col N$){
+\fore($j = 1\col L$){
+\fore($k = 1\col M$){
 \emit{$\matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}
 \vspace{\algspace}
 \end{algorithm}
 
-Inner product has an advantage of generating entries in sorted order, meaning that all partial products needed 
+The inner-product has the advantage of generating entries in sorted order.  All partial products needed 
 to compute a particular element $\matr{C}(i,j)$ are generated consecutively by the third-level loop.
-We may apply $\oplus$ immediately after each third-level loop to obtain an element in $\matr{C}$.
-This means that inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
+The $\oplus$ is applied immediately after each third-level loop to obtain an element in $\matr{C}$.
+The inner-product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
 locally before sending entries to a remote but globally-aware table combiner.
 % move to another section?
 %Inner product also generates output ``in order'' in a second sense: 
@@ -72,26 +69,26 @@ Emitting sorted entries also allows inner product to be used in standard iterato
 %% It is also adventageous that inner product generates entries sorted by row 
 %% and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
-Despite its order-preserving advantages, we chose not to implement inner product 
-because it requires multiple passes:
-the second-level loop that scans over all of $\matr{B}$
-repeats for each row of $\matr{A}$ from the top-level loop iteration.
+Despite its order-preserving advantages, an outer-product algorithm performs better for sparse matrices 
+because it requires on one pass of the data \cite{burkhardt2013big}\cite{burkhardt2014asking}.  The inner-product requires repeating
+the second-level loop that scans over all of $\matr{B}$.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
 multiple passes over $\matr{B}$ translates to multiple Accumulo scans that each require a disk read.
-We found in performance tests that multiple scans over $\matr{B}$ 
-performed an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs 
-(see Section~\ref{sPerformance})
-whereas an outer product method ran in under 8.
+We found in performance tests that an outer-product approach performed an order-of-magnitude better than an inner-product approach.
+%multiple scans over $\matr{B}$ 
+%performed an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs 
+%(see Section~\ref{sPerformance})
+%whereas an outer product method ran in under 8.
 
-Outer product matrix multiply runs the following:
+Outer product matrix multiply runs the following
 
 \removelatexerror
 \begin{algorithm}[H]
 \vspace{\algspace}
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($k = 1\col m$){
+\fore($k = 1\col M$){
 \emit{$\matr{A}(:,k) \matr{B}(k,:)$}
 }
 \vspace{\algspace}
@@ -108,9 +105,9 @@ which we unfold as
 \vspace{\algspace}
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($k = 1\col m$){
-\fore($i = 1\col n$){
-\fore($j = 1\col p$){
+\fore($k = 1\col M$){
+\fore($i = 1\col N$){
+\fore($j = 1\col L$){
 \emit{$ \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}
 \vspace{\algspace}
@@ -164,7 +161,7 @@ The key idea behind the TableMult iterators is that they divert normal dataflow 
 %reducing entries sent to the client to zero and instead sending 
 redirecting entries out-of-band to $\matr{C}$ via
 Accumulo's ingest channel that does not require sorted order. 
-The scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
+The scan itself emits no entries except for a small number of ``monitoring entries'' 
 that inform the client about TableMult progress.
 %Thus the TableMult iterators act as reduction iterators, even though they actually transmit 
 %a huge stream of entries out-of-band to another Accumulo table.
@@ -222,7 +219,7 @@ or one runs out of entries. We skip non-matching rows
 since they would multiply with an all-zero row that, by Section~\ref{sMatMul}'s assumptions,
 generate all zero patrial products.
 \item Cartesian product. Read both matching rows into an in-memory data structure. 
-Initialize an iterator that emits pairs of entries from the rows' Carteisan product.
+Initialize an iterator that emits pairs of entries from the rows' Cartesian product.
 \item Multiply. Pass pairs of entries to $\otimes$ and emit results. 
 \end{enumerate}
 
@@ -244,7 +241,7 @@ Barring extreme events such as exceptions in the iterator stack or thread death,
 we designed RemoteWriteIterator to maintain correctness, such that entries generated from
 its source write to the remote table once.
 We accomplish this by performing all BatchWriter operations within a single function call
-before ceding thread contol back to the tablet server.  
+before ceding thread control back to the tablet server.  
 
 A performance concern remains when multiplying a subset of the input tables' rows 
 that consists of many disjoint ranges, such as one million ``singleton'' ranges spanning one row each.
@@ -272,7 +269,7 @@ on table $\matr{C}$ at scan, minor and major compaction scopes.
 Thus, $\oplus$ occurs sometime after RemoteWriteIterator writes partial products to $\matr{C}$
 yet necessarily before entries from $\matr{C}$ may be seen such that we always achieve correctness.
 Summation could happen when Accumulo flushes table $\matr{C}$'s entries cached in memory to a new RFile, 
-when Accumulo compacts RFiles together or when a client scans $\matr{C}$. 
+when Accumulo compacts RFiles together, or when a client scans $\matr{C}$. 
 
 The key algebraic requirement for implementing $\oplus$ inside a Combiner
 is that $\oplus$ must be associative and commutative.
@@ -286,7 +283,7 @@ RemoteWriteIterator never emits entries to the client by default.
 One downside of this approach is that clients cannot precisely track the progress of a TableMult operation,
 which may frustrate users expecting a more interactive computing experience.
 Clients could query the Accumulo monitor for read/write rates 
-or prematurely scan partial products written to $\matr{C}$, but both approaches are unhelpfully coarse.
+or prematurely scan partial products written to $\matr{C}$, but both approaches are too coarse.
 %having only access to coarse Accumulo monitor rate information or partial product scans on $\matr{C}$.
 %% The only information clients would have are scan and write rates from the Accumulo monitor,
 %% whether a scan is running, idle or queued from the tablet server, and what partial products 

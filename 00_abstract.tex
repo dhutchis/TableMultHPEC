@@ -1,12 +1,13 @@
 %!TEX root = SpGEMM_Accumulo_HPEC.tex
 \begin{abstract}
-Databases such as Apache Accumulo excel at distributed storage
+The Apache Accumulo database excels at distributed storage
 and indexing
-and are ideally suited for graphs.
+and is ideally suited for storing graph data.
 %yet are not designed for general computing.
 %However,
-Many big data applications such as enrichment and analytics
-compute on graph data and persist results back to the database.
+Many big data graph analytics
+compute on graph data and persist the results back to the database.
+These graph calculations are often best performed inside the database server. 
 %The Graphulo library is designed to take advantage of 
 %Accumulo's graph capabilities
 %Users must subsequently implement complex clients and shuffle 
@@ -17,17 +18,19 @@ compute on graph data and persist results back to the database.
 %% compute on Accumulo data and persist results back to Accumulo anyway.
 %% Users must subsequently implement complex clients and shuffle 
 %% data between Accumulo storage and engines for compute.
-In this article, 
+The GraphBLAS standard provides a compact and efficient approach for implementing
+a wide range of graph applications with a small number of sparse matrix operations. 
 %we propose 
-we enable sparse matrix multiplication
-server-side on Accumulo tables
-by repurposing Accumulo iterators.
-We compare mathematics and performance 
-of inner and outer product approaches 
-and show how an outer product implementation scales with synthetic experiments.
+We implement the GraphBLAOS sparse matrix multiplication
+inside Accumulo databaes server
+by leveraging Accumulo's native, high-performance iterators.
+We compare the mathematics and the performance 
+of both inner-product and outer-product implementations 
+and show how an outer-product implementation achieves optimal performance near
+the peak write rate of Accumulo.
 % part of the Graphulo library
-We offer our work as a core component to a Graphulo library
-that will deliver linear algebra primitives within Accumulo.
+We offer our work as a core component to the Graphulo library
+that will deliver matrix mathematics primitives for graph analytics within Accumulo.
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,

@@ -11,64 +11,63 @@ NoSQL databases such as Apache Accumulo
 concentrate on high performance ingest and scans~\cite{sen2013benchmarking}. 
 While fast ingest and scans solve some big data problems,
 more complex scenarios involve running tasks
-such as enrichment, algorithms and analytics. These techniques
+such as data enrichment, graph algorithms, and clustering analytics. These techniques
 often move data from a database %or storage engine 
-to a computational element. The ability to
+to a compute node. The ability to
 %perform enrichment, algorithms or analytics directly in a database or storage engine
 compute directly in a database can lead to benefits including 
 %can provide benefits such as 
-\emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}. 
+\emph{selective access}, \emph{data locality}, and \emph{infrastructure reuse}. 
 
-Consider the Apache Accumulo database whose features as a database deliver
-fast answers to data subsets along indexed attributes. 
+Apache Accumulo is designed to deliver
+fast answers to queries for data subsets along indexed attributes. 
 % Conducting computation within a database like Accumulo offers several advantages,
 % assuming we can efficiently map it to the database's programming model:
 % %as opposed to YARN or MapReduce directly on HDFS, are 
-Accumulo sits atop the physical location data is stored and cached
-such that computation inside Accumulo can avoid unnecessary network transfer,
-effectively moving ``compute to data'' like a stored procedure
-in contrast to client-server models moving ``data to compute.''
-Computing in Accumulo also reuses its distributed infrastructure
-such as write-ahead logging, fault-tolerant execution atop Zookeeper and 
-horizontal scaling from a master load balancing tablets.
+The Accumulo server processes typically run on the physical nodes where data is stored and cached.
+Performing computations inside Accumulo can avoid unnecessary network transfer,
+effectively moving ``compute-to-data''
+in contrast to client-server models that move ``data to compute.''
+Performing computations in the Accumulo server also reuses its distributed infrastructure
+such as write-ahead logging, fault-tolerant execution, and 
+parallel load balancing of data.
 
 %cite linear algebra on database data?
-One family of algorithms commonly applied to large scale data is linear algebra.
+There are variety of ways to store graphs in a Accumulo.  One common schema is
+to store the graph as a sparse matrix.  Graph algorithms performed on graphs
+represented as sparse matrices can be easily implemented with a small number
+of matrix operations. 
 Researchers in the GraphBLAS Forum \cite{mattson2014standards} 
 have identified a set of kernels
-that form a basis for linear algebraic algorithms useful for graphs, including 
-sparse general matrix multiplication (SpGEMM), sparse element-wise multiplication (SpEWiseX),
-sparse subset reference (SpRef), reduction along a dimension (Reduce),
-function application (Apply) and others.
+that form a basis for matrix algorithms useful for graphs.
 This article presents Graphulo, an effort to realize the GraphBLAS primitives 
-and enable algorithms in the language of linear algebra server-side in Accumulo \cite{gadepally2015gabb}.
+to enable server-side algorithms using matrix mathematics in Accumulo \cite{gadepally2015gabb}.
 
 %I don't want to make something like MapReduce-- Accumulo facilitates a particular kind of computation 
 %using iterators.  Not all computation patterns fit into the iterator framework. EXAMPLE
 %We shouldn't stuff computation contradictory to the iterator framework into Accumulo, 
 %as many have done stretching iterative algorithms into the MapReduce framework.
 
-In this paper we focus on SpGEMM, a core kernel at the heart of the GraphBLAS.
-In fact, many other GraphBLAS primitives can be expressed in terms of
-SpGEMM through custom functions that may redefine multiplication and addition. 
-SpGEMM usage ranges from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} 
-and plenty others described in the introduction of \cite{bulucc2010highly}.
+In this paper we focus on Sparse Generalized Matrix Multiply (SpGEMM), the core kernel at the heart of the GraphBLAS.
+Many GraphBLAS primitives can be expressed in terms of
+SpGEMM via the GraphBLAS user-defined elementwise multiplication and addition functions. 
+SpGEMM can be used to implement a wide range of algorithms from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} and many others (see \cite{bulucc2010highly}).
 
 We call our implementation of SpGEMM on Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
-Accumulo tables have many similarities to sparse matrices, though a more precise analogy is with Associative Arrays 
+Accumulo tables have many similarities to sparse matrices, though a more precise mathematical definition would be Associative Arrays 
 \cite{kepner2014gabb}. For the purpose of this work, we concentrate on
 large distributed tables that may not fit in memory and use a streaming
-approach that can distribute with Accumulo's infrastructure.
+approach that leverages Accumulo's builtin distributed infrastructure.
 % Because Accumulo tables may span Hadoop clusters,
 % we never assume a table fits in memory
 % and instead take a streaming approach that distributes with Accumulo's infrastructure.
 
-We are particularly interested in SpGEMM for queued analytics, that is, analytics on selected table subsets.  
+We are particularly interested in Graphulo for queued analytics, that is, analytics on selected table subsets.  
 Queued analytics maximally leverage Accumulo as a database 
 by quickly accessing subsets of interest, 
-whereas whole-table analytics usually perform better on parallel file systems such as Lustre or Hadoop.
-We therefore prioritize low latency over high throughput, %when we must choose between them
-in the best case enabling analysts to manipulate Accumulo data interactively.
+whereas whole-table analytics may perform better on parallel file systems such as Lustre or Hadoop.
+We therefore prioritize smaller problems that require low latency %when we must choose between them
+to enable analysts to explore graph data interactively.
 
 %\subsection{Paper Outline}
 
@@ -94,16 +93,16 @@ concluding in Section~\ref{sConclusions}.
 \subsection{Primer: Accumulo and its Iterator Stack}
 \label{sAccumuloIterators}
 %key, value, entry, tablet
-Accumulo stores data in Hadoop RFiles as byte arrays indexed by key in (key, value) pairs called entries.
-Keys decompose further into row, column family, qualifier, visibilitiy and timestamp,
-though we mainly consider row and column qualifier in this work.
-Entries belong to tables that Accumulo divides into tablets and assigns to tablet servers.
-Clients write new entries via BatchWriters and retrieve entries from tablets sequentially via Scanners
+Accumulo stores data in Hadoop RFiles as byte arrays indexed by key using (key, value) pairs called entries.
+Keys decompose further into 5-tuple consisting of a row, column family, column qualifier, visibility and timestamp.
+For simplicity, we focus on a 2-tuple key consisting of a row and column qualifier.
+Each entry forms a row in an Accumulo table. Accumulo divides tables into tablets and assigns each tablet to a tablet server.
+Accumulo client applications write new entries via BatchWriters and retrieve entries from tablets sequentially via Scanners
 or in parallel via BatchScanners.
 
 Accumulo's server-side programming model runs an \emph{iterator stack} on each tablet in range of a scan, 
 which is a list of classes that implement the \texttt{SortedKeyValueIterator} (SKVI) interface.
-At a high level, an iterator stack is a set of data streams originating
+An iterator stack is a set of data streams originating
 at Accumulo's data sources for a specific tablet (Hadoop RFiles and cached in-memory maps), 
 converging together in merge-sorts,
 flowing through each iterator in the stack and at the end, sending entries to the client,
@@ -122,15 +121,15 @@ and emit one entry at a time until finished iterating.
 However, they are more powerful than Java iterators in that they can seek to a specific position
 in the data stream (top-level system iterators perform actual disk seeks).
 
-A special caveat to iterator stacks is that Accumulo may destroy, re-create 
-and re-seek them to their last emitted key between function calls.
-Accumulo does this when it needs to switch data sources after a compaction, 
-when a client stops requesting data, or out of fairness to concurrent scans.
-Iterators have no \texttt{close} method that would grant them the lifecycle control to clean up state
-before Accumulo destroys them, and so the only safe way for an 
-iterator to use state requiring cleanup (such as opening a file or starting a thread)
-is to clean up state before returning from any call.
-Ideas discussed in \cite{ACCUMULO-3751} may lax this restriction for future Accumulo versions.
+%A special caveat to iterator stacks is that Accumulo may destroy, re-create 
+%and re-seek them to their last emitted key between function calls.
+%Accumulo does this when it needs to switch data sources after a compaction, 
+%when a client stops requesting data, or out of fairness to concurrent scans.
+%Iterators have no \texttt{close} method that would grant them the lifecycle control to clean up state
+%before Accumulo destroys them, and so the only safe way for an 
+%iterator to use state requiring cleanup (such as opening a file or starting a thread)
+%is to clean up state before returning from any call.
+%Ideas discussed in \cite{ACCUMULO-3751} may lax this restriction for future Accumulo versions.
 
 %\1 Iterators are most commonly used for streaming computation in the sense that iterators
 %should run in a single pass over their source's data and not store too much state.

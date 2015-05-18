@@ -4,11 +4,11 @@
 \label{sPerformance}
 
 We evaluate TableMult with two variants of an experiment. 
-First we gauge weak scaling by measuring rate of computation as problem size increases.
+First we measure the rate of computation as problem size increases.
 We define problem size as number of rows in random input graphs 
 represented as adjacency tables
 and rate of computation as number of partial products processed per second.
-Second we gauge strong scaling by repeating the experiment with all tables split into two tablets,
+Second we repeat the experiment for a fixed size problem with all tables split into two tablets,
 allowing Accumulo to scan and write to them in parallel.
 
 %% We evalutate our TableMult implementation with a weak scaling experiment,
@@ -25,8 +25,8 @@ We compare Graphulo TableMult performance to D4M as a baseline because
 a user with one client machine's best alternative is reading input graphs from Accumulo, 
 multiplying them at the client, and inserting the result back into Accumulo.
 
-D4M stores tables as Associative Array objects in Matlab, written as Assocs for short.  
-Because Assoc multplication runs fast in memory, 
+D4M stores tables as Associative Array objects in Matlab.  
+Because Assoc Array multplication runs fast in memory, 
 D4M bottlenecks on reading data from Accumulo and especially on writing back results.
 We consequently expect TableMult to outperform D4M 
 because TableMult avoids transferring data out of Accumulo for processing. 
@@ -75,7 +75,7 @@ as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
 \end{enumerate}
 
 %\subsection{Environment}
-We conduct the experiments on a laptop with 16GB RAM and 2 Intel i7 processors %at 3GHz
+We conduct the experiments on a laptop with 16GB RAM with dual dual-core Intel i7 processors %at 3GHz
 running Ubuntu 14.04 linux. We use single-instance Accumulo 1.6.1, Hadoop 2.6.0 and ZooKeeper 3.4.6.
 We allocate 2GB of memory to the Accumulo tablet server initially
 (allowing growth in 500MB steps),
@@ -117,10 +117,9 @@ We show table $\matr{C}$ sizes and experiment timings in Table~\ref{tResultsPara
 and plot them in Figure~\ref{fTableMultPerf}.
 We could not run the D4M comparison past SCALE 15 because $\matr{C}$ does not fit in memory.
 
-In terms of weak scaling, the best results we could achieve are flat horizontal lines, 
+For the scaled problem, the best results we could achieve are flat horizontal lines, 
 indicating that we maintain the same level of operations per second as problem size increases.
-Graphulo roughly achieves weak scaling, although the two-tablet Graphulo curve 
-shows instability.
+%Graphulo roughly achieves weak scaling, although the two-tablet Graphulo curve shows instability.
 
 One reason we see a downward rate trend at larger problem sizes is that Accumulo
 needs to minor compact table $\matr{C}$ in the middle of a TableMult. 
@@ -132,14 +131,14 @@ in rate measurements. % (in partial products per second).
 %% our rate measurements (in partial products per second) do not include summing 
 %% and disk flush operations Accumulo performs during minor compaction.
 
-In terms of strong scaling, the best results we could achieve are two-tablet rates
+For the fixed size problem, the best results we could achieve are two-tablet rates
 double the one-tablet rates for every problem size.
 Our experiment shows that Graphulo two-tablet multiply rates perform up to 1.5x better
 than one-tablet rates with degraded performance at higher SCALEs.  
-We attribute TableMult's shortfall to high processor contention as a result of 
-the 14 threads that may run concurrently with two tablets; in fact,
+We attribute TableMult's shortfall to high processor contention for the four cores as a result of 
+the 14 threads that may run concurrently with two tablets on ; in fact,
 processor usage hovered near 100\% for all four laptop cores throughout the two-tablet experiments.
-We expect better strong scaling when running our experiment 
+We expect better scaling when running our experiment 
 in a larger Accumulo cluster that can handle more degrees of parallelism.
 
 %Odd factor: OS frequently killed the Accumulo garbage collector.

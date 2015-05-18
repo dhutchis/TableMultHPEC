@@ -41,7 +41,7 @@ scan and write from multiple clients in parallel;
 in fact, researchers obtained 
 considerably high insert rates using parallel client strategies \cite{kepner2014achieving}.
 We chose to build Graphulo as a service within Accumulo
-instead of assuming multiple client capability,
+instead of assuming a multiple client capability,
 such that Graphulo is as accessible as possible to diverse client environments.
 
 The strategy in \cite{kepner2014achieving} 
@@ -56,7 +56,7 @@ but also
 which prior work has shown is a bottleneck for scans % writes?
 when iterator processing is light \cite{sawyer2013understanding}.
 %Enhancing Accumulo for non-Thrift, local access may 
-Such an enhancement would access a local tablet server by method call 
+Such an enhancement would access a local tablet server by a method call 
 in place of Scanners and BatchWriters.
 %use a new access inter-process chanel 
 %optimized for 
@@ -106,17 +106,17 @@ choosing a middle point in Figure~\ref{fInnerOuterSpectrum}
 with equal read and write bottlenecks for overall greater performance?
 In the following generalization, 
 partition parameter $P$ varies behavior between
-inner product at $P=n$ and outer product at $P=1$:
+inner product at $P=N$ and outer product at $P=1$:
 
 \removelatexerror
 \begin{algorithm}[H]
 \vspace{\algspace}
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
-\fore($l = 1\col P$){
+\fore($p = 1\col P$){
 \fore($k = 1\col m$){
-\fore({$i = \left( \floor*{\dfrac{(l-1)n}{P}}+1 \right) \col \floor*{\dfrac{ln}{P}}$}){
-\fore($j = 1\col p$){
+\fore({$i = \left( \floor*{\dfrac{(p-1)N}{P}}+1 \right) \col \floor*{\dfrac{p N}{P}}$}){
+\fore($j = 1\col L$){
 %\vspace{4pt}
 \emit{$ \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}}
@@ -124,7 +124,7 @@ inner product at $P=n$ and outer product at $P=1$:
 \end{algorithm}
 
 The hybrid algorithm runs $P$ passes through $\matr{B}$,
-each of which has write locality to a vertical partition of $\matr{C}$ of size $\ceil{n / P}$.
+each of which has write locality to a vertical partition of $\matr{C}$ of size $\ceil{N / P}$.
 Pre-summing ability likewise varies inversely with $P$, 
 though actual pre-summing depends on
 $\matr{A}$ and $\matr{B}$'s  sparsity distribution
@@ -157,15 +157,15 @@ given limited data layout control and unknown data distribution.
 %% Accumulo's internal state and non-public API.
 %% We suggest this paper's approach as a balance between top performance and implementation stability.
 
-Nevertheless, possible design criteria are to minimize $P$ in order to minimize passes through $\matr{B}$,
-while also choosing $P$ large enough so that $\ceil{\frac{np}{P}}$ entries fit in memory
+Nevertheless, possible design criteria are to select $P$ to minimize passes through $\matr{B}$,
+while also choosing $P$ large enough so that $\ceil{N/P}$ entries fit in memory
 (dense matrix worst case), which guarantees complete pre-summing.
 The latter criterion may be relaxed with decreasing matrix density.
 
 
 \subsection{TableMult in Algorithms}
 Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
-Suppose we have a program $\matr{E} = \matr{AB}; \matr{F} = \matr{CD}; \matr{G} = \matr{EF}$.
+Suppose we have a program $\matr{E} = \matr{A B}; \matr{F} = \matr{C D}; \matr{G} = \matr{E F}$.
 We would save two round trips to disk if we could mark $\matr{E}$ and $\matr{F}$ as 
 ``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
 and not written to Hadoop if possible.
@@ -180,7 +180,7 @@ More ambitiously, \emph{loop fusion} merges iterator stacks
 for successive computations into one. 
 
 Optimizing computation on NoSQL databases is challenging in the general case because
-NoSQL databases mostly exclude query planner features 
+NoSQL databases typically avoid query planner features 
 customary of SQL databases in exchange for raw performance.
 % and simplicity of implementation
 NewSQL databases aim in part to achieve the best of both worlds---performance and query planning \cite{grolinger2013data}.
@@ -194,16 +194,14 @@ We aspire to make a small step for Accumulo in the direction of NewSQL with curr
 \section{Conclusions}
 \label{sConclusions}
 
-In this work we showcase the design of TableMult, a Graphulo implementation of the 
-SpGEMM GraphBLAS linear algebra kernal server-side on Accumulo tables.
+In this work we showcase the design of TableMult, a Graphulo server-side implementation of the 
+SpGEMM GraphBLAS matrix math kernel in the Accumulo database.
 We compare inner and outer approaches and show how outer product 
-better fits Accumulo's iterator model.
-Performance experiments show good weak scaling and hint at strong scaling,
-although repeating experiments on a larger cluster is necessary to confirm.
+better fits Accumulo's iterator model.  The implementation shows excellent single node performance, achieving rates near 400,000 per second, which is the consistent with single node peak write rate for Accumulo \cite{kepner2014achieving}.
+Performance experiments show good scaling for scaled problem sized and suggest good scaling for fixed size problems,
+but these require addditonal experiments on a larger cluster to confirm.
 
-Current research in addition to topics from Section~\ref{sDiscussion}'s discussion, 
-is to implement the remaining GraphBLAS kernels 
-and develop algorithms calling them, % atop the Graphulo library,
-ultimately delivering a Graphulo linear algebra library 
-as a pattern for server-side computation
-to the Accumulo community.
+In addition to topics from Section~\ref{sDiscussion}'s discussion, future research efforts include: 
+implementing the remaining GraphBLAS kernels, 
+developing graph algorithms that use the Graphulo, % atop the Graphulo library,
+and delivering to the Accumulo community.
