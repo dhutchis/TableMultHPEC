@@ -7,7 +7,7 @@
 \subsection{Matrix Multiplication}
 \label{sMatMul}
 Given matrices $\matr{A}$ of size $N \times M$, $\matr{B}$ of size $M \times L$,
-and operations $\oplus$ and $\otimes$ for elementwise addition and multiplication,
+and operations $\oplus$ and $\otimes$ for element-wise addition and multiplication,
 the matrix product $\matr{C} = \matr{A} \,{\oplus}.{\otimes}\, \matr{B} $, or more shortly $\matr{C} = \matr{A}\matr{B}$,
 defines entries of result matrix $\matr{C}$ as 
 \[ \matr{C}(i,j) = \bigoplus_{k=1}^M \matr{A}(i,k) \otimes \matr{B}(k,j) \]
@@ -25,8 +25,8 @@ Sparse arithmetic requires these conditions, because otherwise zero operands cou
 
 
 We study two well known patterns for computing matrix multiplication:
-inner-product and outer-product \cite{kruskal1989techniques}. They differ in the order in which they perform
-the $\otimes$ and $\oplus$ operations.  The more common inner-product approach runs the following %computes 
+inner product and outer product \cite{kruskal1989techniques}. They differ in the order in which they perform
+the $\otimes$ and $\oplus$ operations.  The more common inner product approach runs the following %computes 
 %each $\matr{C}(i,j)$ at once by computing the product of the row vector $\matr{A}(i,:)$ with
 %the column vector $\matr{B}(:,j)$
 
@@ -45,8 +45,9 @@ the $\otimes$ and $\oplus$ operations.  The more common inner-product approach r
 %\noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
 %\todo{It is not desirable to defer $\oplus$ because it means we write more individual entries to C.}
 %In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$% (using Accumulo's builtin summing combiners), the above approach can be rewritten as
-\noindent computing each $\matr{C}(i,j)$ at once by performing inner product on vectors.
-For the purpose of comparison, we rewrite the above approach with addition deferred as
+\noindent %computing each $\matr{C}(i,j)$ at once by performing inner product on vectors.
+performing inner product on vectors.
+For easier comparison, we rewrite the above approach with summation deferred as
 
 \removelatexerror
 \begin{algorithm}[H]
@@ -61,9 +62,10 @@ For the purpose of comparison, we rewrite the above approach with addition defer
 \vspace{\algspace}
 \end{algorithm}
 
-The inner-product has the advantage of generating entries in sorted order.  All partial products needed 
-to compute a particular element $\matr{C}(i,j)$ are generated consecutively by the third-level loop.
-The $\oplus$ is applied immediately after each third-level loop to obtain an element in $\matr{C}$.
+Inner product has the advantage of generating entries in sorted order:
+the third-level loop generates all partial products needed 
+to compute a particular element $\matr{C}(i,j)$ consecutively.
+The $\oplus$ applies immediately after each third-level loop to obtain an element in $\matr{C}$.
 The inner-product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
 locally before sending entries to a remote but globally-aware table combiner.
 % move to another section?
@@ -227,7 +229,7 @@ Initialize an iterator that emits pairs of entries from the rows' Cartesian prod
 \end{enumerate}
 
 A client defines $\otimes$ by specifying a class 
-that implements a provided ``multiply interface.''
+that implements a multiply interface.
 %which TwoTableIterator instantiates and calls. 
 For our experiments we implement $\otimes$ as java.math.BigDecimal multiplication
 which guarantees correctness under large or precise real numbers.

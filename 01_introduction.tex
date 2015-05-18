@@ -101,16 +101,16 @@ Client applications write new entries via BatchWriters
 and retrieve entries sequentially via Scanners
 or in parallel via BatchScanners.
 
-Accumulo's server-side programming model runs an \emph{iterator stack} on tablets in range of a scan, 
-where each iterator is a SortedKeyValueIterator (SKVI) Java class.
+Accumulo's server-side programming model runs an \emph{iterator stack} on tablets in range of a scan.
 An iterator stack is a set of data streams originating
 at Accumulo's data sources for a specific tablet (Hadoop RFiles and cached in-memory maps), 
 converging together in merge-sorts,
-flowing through each iterator in the stack and at the end, sending entries to the client,
-all while maintaining data emission in sorted order.
+flowing through each iterator in the stack and at the end, sending entries to the client.
+%all while maintaining data emission in sorted order.
+Iterators themselves are Java classes implementing the SortedKeyValueIterator (SKVI) interface.
 
 Developers add custom logic for server-side computation
-by writing new SKVIs and plugging them into the iterator stack.
+by writing new iterators and plugging them into the iterator stack.
 In return for fitting their computation in the SKVI paradigm, developers gain
 distributed parallelism for free as Accumulo runs their iterators on relevant tablets simultaneously.
 
@@ -119,8 +119,13 @@ distributed parallelism for free as Accumulo runs their iterators on relevant ta
 
 SKVIs are reminiscent of built-in Java iterators in that they hold state 
 and emit one entry at a time until finished iterating.
-However, they are more powerful than Java iterators in that they can seek to a specific position
-in the data stream (top-level system iterators perform actual disk seeks).
+However, they are more powerful than Java iterators in that they can seek to arbitrary positions
+in the data stream. % (top-level system iterators perform actual disk seeks).
+They also have two constraints: 
+the end of the iterator stack should emit entries in sorted order,
+and iterators must not maintain volatile state such as threads, open files or sockets,
+because Accumulo may destroy, re-create and re-seek an iterator stack
+between function calls without allowing time to clean up.
 
 %A special caveat to iterator stacks is that Accumulo may destroy, re-create 
 %and re-seek them to their last emitted key between function calls.
