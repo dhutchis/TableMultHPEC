@@ -26,7 +26,7 @@ fast answers to queries for data subsets along indexed attributes.
 % %as opposed to YARN or MapReduce directly on HDFS, are 
 The Accumulo server processes typically run on the physical nodes where data is stored and cached.
 Performing computations inside Accumulo can avoid unnecessary network transfer,
-effectively moving ``compute-to-data''
+effectively moving ``compute to data''
 in contrast to client-server models that move ``data to compute.''
 Performing computations in the Accumulo server also reuses its distributed infrastructure
 such as write-ahead logging, fault-tolerant execution, and 
@@ -50,12 +50,12 @@ to enable server-side algorithms using matrix mathematics in Accumulo \cite{gade
 
 In this paper we focus on Sparse Generalized Matrix Multiply (SpGEMM), the core kernel at the heart of the GraphBLAS.
 Many GraphBLAS primitives can be expressed in terms of
-SpGEMM via the GraphBLAS user-defined elementwise multiplication and addition functions. 
+SpGEMM via the GraphBLAS user-defined element-wise multiplication and addition functions. 
 SpGEMM can be used to implement a wide range of algorithms from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} and many others (see \cite{bulucc2010highly}).
 
 We call our implementation of SpGEMM on Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
-Accumulo tables have many similarities to sparse matrices, though a more precise mathematical definition would be Associative Arrays 
-\cite{kepner2014gabb}. For the purpose of this work, we concentrate on
+Accumulo tables have many similarities to sparse matrices, though a more precise mathematical definition is Associative Arrays 
+\cite{kepner2014gabb}. For this work, we concentrate on
 large distributed tables that may not fit in memory and use a streaming
 approach that leverages Accumulo's builtin distributed infrastructure.
 % Because Accumulo tables may span Hadoop clusters,
@@ -63,10 +63,10 @@ approach that leverages Accumulo's builtin distributed infrastructure.
 % and instead take a streaming approach that distributes with Accumulo's infrastructure.
 
 We are particularly interested in Graphulo for queued analytics, that is, analytics on selected table subsets.  
-Queued analytics maximally leverage Accumulo as a database 
+Queued analytics maximally leverage  databases
 by quickly accessing subsets of interest, 
 whereas whole-table analytics may perform better on parallel file systems such as Lustre or Hadoop.
-We therefore prioritize smaller problems that require low latency %when we must choose between them
+We therefore prioritize smaller problems that require low latency
 to enable analysts to explore graph data interactively.
 
 %\subsection{Paper Outline}
@@ -94,14 +94,15 @@ concluding in Section~\ref{sConclusions}.
 \label{sAccumuloIterators}
 %key, value, entry, tablet
 Accumulo stores data in Hadoop RFiles as byte arrays indexed by key using (key, value) pairs called entries.
-Keys decompose further into 5-tuple consisting of a row, column family, column qualifier, visibility and timestamp.
+Keys decompose further into 5-tuples consisting of a row, column family, column qualifier, visibility and timestamp.
 For simplicity, we focus on a 2-tuple key consisting of a row and column qualifier.
-Each entry forms a row in an Accumulo table. Accumulo divides tables into tablets and assigns each tablet to a tablet server.
-Accumulo client applications write new entries via BatchWriters and retrieve entries from tablets sequentially via Scanners
+Entries belong to tables, which Accumulo divides into tablets and assigns to tablet servers.
+Client applications write new entries via BatchWriters 
+and retrieve entries sequentially via Scanners
 or in parallel via BatchScanners.
 
-Accumulo's server-side programming model runs an \emph{iterator stack} on each tablet in range of a scan, 
-which is a list of classes that implement the \texttt{SortedKeyValueIterator} (SKVI) interface.
+Accumulo's server-side programming model runs an \emph{iterator stack} on tablets in range of a scan, 
+where each iterator is a SortedKeyValueIterator (SKVI) Java class.
 An iterator stack is a set of data streams originating
 at Accumulo's data sources for a specific tablet (Hadoop RFiles and cached in-memory maps), 
 converging together in merge-sorts,

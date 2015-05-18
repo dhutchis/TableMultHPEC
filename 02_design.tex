@@ -16,7 +16,7 @@ We call intermediary results of $\otimes$ operations \emph{partial products}.
 In the case of sparse matrices, we only perform $\oplus$ and $\otimes$ where both operands are nonzero,
 an optimization stemming from requiring that 0 is an additive identity of $\oplus$ such that $a \oplus 0 = 0 \oplus a = a$,
 and that 0 is a multiplicative annhilator of $\otimes$ such that $a \otimes 0 = 0 \otimes a = 0$.
-Sparse arithmetic requires these conditions, otherwise zero operands could then generate nonzero results.
+Sparse arithmetic requires these conditions, because otherwise zero operands could generate nonzero results.
 
 % In Accumulo, zero elements are entries that do not exist in a table. Entries that actually contain the value zero may exist
 % from an operation producing a zero value (such as summing partial products 5, -3 and -2).  
@@ -42,7 +42,8 @@ the column vector $\matr{B}(:,j)$
 \vspace{\algspace}
 \end{algorithm}
 
-\noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
+%\noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
+\todo{It is not desirable to defer $\oplus$ because it means we write more individual entries to C.}
 In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$ (using Accumulo's builtin summing combiners), the above approach can be rewritten as
 
 \removelatexerror

@@ -75,7 +75,7 @@ as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
 \end{enumerate}
 
 %\subsection{Environment}
-We conduct the experiments on a laptop with 16GB RAM with dual dual-core Intel i7 processors %at 3GHz
+We conduct the experiments on a laptop with 16GB RAM and two dual-core Intel i7 processors %at 3GHz
 running Ubuntu 14.04 linux. We use single-instance Accumulo 1.6.1, Hadoop 2.6.0 and ZooKeeper 3.4.6.
 We allocate 2GB of memory to the Accumulo tablet server initially
 (allowing growth in 500MB steps),
@@ -136,7 +136,7 @@ double the one-tablet rates for every problem size.
 Our experiment shows that Graphulo two-tablet multiply rates perform up to 1.5x better
 than one-tablet rates with degraded performance at higher SCALEs.  
 We attribute TableMult's shortfall to high processor contention for the four cores as a result of 
-the 14 threads that may run concurrently with two tablets on ; in fact,
+the 14 threads that may run concurrently with two tablets on; in fact,
 processor usage hovered near 100\% for all four laptop cores throughout the two-tablet experiments.
 We expect better scaling when running our experiment 
 in a larger Accumulo cluster that can handle more degrees of parallelism.

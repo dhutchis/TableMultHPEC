@@ -157,3 +157,20 @@ balance between inner product (partitions between every row) and outer product (
 %% although only users with access to the Accumulo instance may see the password in iterator options.
 
 
+
+> it is desirable to to defer additions to be performed by the output table $\matr{C}$
+It is not desirable to defer additions because it means we write more individual entries to C.
+
+Are we going with writing  ``inner product'' or  ``inner-product'' and same for outer?  We need consistency.
+
+Why not use the term strong scaling and weak scaling?
+Weak scaling => scaled problem
+Strong scaling => fixed size problem
+linear algebra => matrix math
+
+Concern for optimal performance: yes, peak write rate, but at the cost of inventing more entries to write.
+
+
+
+
+

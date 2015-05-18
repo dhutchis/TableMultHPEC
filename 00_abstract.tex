@@ -3,8 +3,6 @@
 The Apache Accumulo database excels at distributed storage
 and indexing
 and is ideally suited for storing graph data.
-%yet are not designed for general computing.
-%However,
 Many big data graph analytics
 compute on graph data and persist the results back to the database.
 These graph calculations are often best performed inside the database server. 
@@ -18,19 +16,20 @@ These graph calculations are often best performed inside the database server.
 %% compute on Accumulo data and persist results back to Accumulo anyway.
 %% Users must subsequently implement complex clients and shuffle 
 %% data between Accumulo storage and engines for compute.
-The GraphBLAS standard provides a compact and efficient approach for implementing
+The GraphBLAS standard provides a compact and efficient basis for
 a wide range of graph applications with a small number of sparse matrix operations. 
 %we propose 
-We implement the GraphBLAOS sparse matrix multiplication
-inside Accumulo databaes server
+We implement GraphBLAS sparse matrix multiplication
+%inside the Accumulo database
+server-side
 by leveraging Accumulo's native, high-performance iterators.
-We compare the mathematics and the performance 
-of both inner-product and outer-product implementations 
+We compare the mathematics and performance 
+of inner- and outer-product implementations,
 and show how an outer-product implementation achieves optimal performance near
-the peak write rate of Accumulo.
+Accumulo's peak write rate.
 % part of the Graphulo library
 We offer our work as a core component to the Graphulo library
-that will deliver matrix mathematics primitives for graph analytics within Accumulo.
+that will deliver matrix math primitives for graph analytics within Accumulo.
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,

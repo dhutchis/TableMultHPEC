@@ -114,7 +114,7 @@ inner product at $P=N$ and outer product at $P=1$:
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
 \fore($p = 1\col P$){
-\fore($k = 1\col m$){
+\fore($k = 1\col M$){
 \fore({$i = \left( \floor*{\dfrac{(p-1)N}{P}}+1 \right) \col \floor*{\dfrac{p N}{P}}$}){
 \fore($j = 1\col L$){
 %\vspace{4pt}
@@ -124,13 +124,14 @@ inner product at $P=N$ and outer product at $P=1$:
 \end{algorithm}
 
 The hybrid algorithm runs $P$ passes through $\matr{B}$,
-each of which has write locality to a vertical partition of $\matr{C}$ of size $\ceil{N / P}$.
+each of which has write locality to a vertical partition of $\matr{C}$ of length $\ceil{N / P}$.
 Pre-summing ability likewise varies inversely with $P$, 
 though actual pre-summing depends on
 $\matr{A}$ and $\matr{B}$'s  sparsity distribution
 as well as how many positions of $\matr{C}$ the TableMult iterators cache.
 Figure~\ref{fInnerOuterSpectrum}'s center depicts the $P=2$ case.
 
+\todo{change $n$ to $N$}
 \begin{figure}[htb]
 \vspace{-4pt}
 \centering
@@ -158,7 +159,7 @@ given limited data layout control and unknown data distribution.
 %% We suggest this paper's approach as a balance between top performance and implementation stability.
 
 Nevertheless, possible design criteria are to select $P$ to minimize passes through $\matr{B}$,
-while also choosing $P$ large enough so that $\ceil{N/P}$ entries fit in memory
+while also choosing $P$ large enough so that $\ceil{NL/P}$ entries fit in memory
 (dense matrix worst case), which guarantees complete pre-summing.
 The latter criterion may be relaxed with decreasing matrix density.
 
@@ -197,11 +198,11 @@ We aspire to make a small step for Accumulo in the direction of NewSQL with curr
 In this work we showcase the design of TableMult, a Graphulo server-side implementation of the 
 SpGEMM GraphBLAS matrix math kernel in the Accumulo database.
 We compare inner and outer approaches and show how outer product 
-better fits Accumulo's iterator model.  The implementation shows excellent single node performance, achieving rates near 400,000 per second, which is the consistent with single node peak write rate for Accumulo \cite{kepner2014achieving}.
-Performance experiments show good scaling for scaled problem sized and suggest good scaling for fixed size problems,
+better fits Accumulo's iterator model.  The implementation shows excellent single node performance, achieving rates near 400,000 per second, which is the consistent with the single node peak write rate for Accumulo \cite{kepner2014achieving}.
+Performance experiments show good scaling for scaled problem sizes and suggest good scaling for fixed size problems,
 but these require addditonal experiments on a larger cluster to confirm.
 
-In addition to topics from Section~\ref{sDiscussion}'s discussion, future research efforts include: 
+In addition to topics from Section~\ref{sDiscussion}'s discussion, future research efforts include
 implementing the remaining GraphBLAS kernels, 
 developing graph algorithms that use the Graphulo, % atop the Graphulo library,
 and delivering to the Accumulo community.
