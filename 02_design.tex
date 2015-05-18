@@ -74,13 +74,16 @@ Emitting sorted entries also allows inner product to be used in standard iterato
 %% It is also adventageous that inner product generates entries sorted by row 
 %% and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
-Despite its order-preserving advantages, an outer-product algorithm performs better for sparse matrices 
-because it requires on one pass of the data \cite{burkhardt2013big}\cite{burkhardt2014asking}.  The inner-product requires repeating
-the second-level loop that scans over all of $\matr{B}$.
+Despite inner product's order-preserving advantages, 
+outer product performs better for sparse matrices 
+because it passes through $\matr{A}$ and $\matr{B}$ once 
+\cite{burkhardt2013big}\cite{burkhardt2014asking}.  
+Inner product's second-level loop repeats
+scans over all of $\matr{B}$ for each row of $\matr{A}$.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
-multiple passes over $\matr{B}$ translates to multiple Accumulo scans that each require a disk read.
-We found in performance tests that an outer-product approach performed an order-of-magnitude better than an inner-product approach.
+multiple passes over $\matr{B}$ translate to multiple Accumulo scans that each require a disk read.
+We found in performance tests that an outer-product approach performed an order of magnitude better than an inner-product approach.
 %multiple scans over $\matr{B}$ 
 %performed an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs 
 %(see Section~\ref{sPerformance})
