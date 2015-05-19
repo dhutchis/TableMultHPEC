@@ -10,7 +10,7 @@
 NoSQL databases such as Apache Accumulo
 concentrate on high performance ingest and scans~\cite{sen2013benchmarking}. 
 While fast ingest and scans solve some big data problems,
-more complex scenarios involve running tasks
+more complex scenarios involve performing tasks
 such as data enrichment, graph algorithms, and clustering analytics. These techniques
 often move data from a database %or storage engine 
 to a compute node. The ability to
@@ -33,27 +33,30 @@ such as write-ahead logging, fault-tolerant execution, and
 parallel load balancing of data.
 
 %cite linear algebra on database data?
-There are variety of ways to store graphs in a Accumulo.  One common schema is
-to store the graph as a sparse matrix.  Graph algorithms performed on graphs
-represented as sparse matrices can be easily implemented with a small number
-of matrix operations. 
-Researchers in the GraphBLAS Forum \cite{mattson2014standards} 
-have identified a set of kernels
-that form a basis for matrix algorithms useful for graphs.
+There are a variety of ways to store graphs in Accumulo.  One common schema is
+to store graphs as sparse matrices.  
+%% Graph algorithms acting on sparse matrix representations 
+%% can be easily implemented with a small number of matrix operations. 
+Researchers in the GraphBLAS forum \cite{mattson2014standards} 
+have identified a small set of kernels
+that form a basis for matrix algorithms useful for graphs
+when represented as sparse matrices.
 This article presents Graphulo, an effort to realize the GraphBLAS primitives 
-to enable server-side algorithms using matrix mathematics in Accumulo \cite{gadepally2015gabb}.
+that enable algorithms using matrix mathematics directly in Accumulo servers \cite{gadepally2015gabb}.
 
 %I don't want to make something like MapReduce-- Accumulo facilitates a particular kind of computation 
 %using iterators.  Not all computation patterns fit into the iterator framework. EXAMPLE
 %We shouldn't stuff computation contradictory to the iterator framework into Accumulo, 
 %as many have done stretching iterative algorithms into the MapReduce framework.
 
-In this paper we focus on Sparse Generalized Matrix Multiply (SpGEMM), the core kernel at the heart of the GraphBLAS.
+In this paper we focus on Sparse Generalized Matrix Multiply (SpGEMM), the core kernel at the heart of GraphBLAS.
 Many GraphBLAS primitives can be expressed in terms of
 SpGEMM via the GraphBLAS user-defined element-wise multiplication and addition functions. 
-SpGEMM can be used to implement a wide range of algorithms from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} and many others (see \cite{bulucc2010highly}).
+SpGEMM can be used to implement a wide range of algorithms 
+from graph search \cite{kepner2011graph} to table joins \cite{cohen2009mad} 
+and many others (see introduction of \cite{bulucc2010highly}).
 
-We call our implementation of SpGEMM on Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
+We call our implementation of SpGEMM in Accumulo \textsc{TableMult}, short for multiplication of Accumulo tables.
 Accumulo tables have many similarities to sparse matrices, though a more precise mathematical definition is Associative Arrays 
 \cite{kepner2014gabb}. For this work, we concentrate on
 large distributed tables that may not fit in memory and use a streaming
@@ -73,12 +76,12 @@ to enable analysts to explore graph data interactively.
 
 We review Accumulo and its model for server-side computation, iterator stacks, 
 in Section~\ref{sAccumuloIterators}.
-We formally define matrix multiplication and compare inner and outer product SpGEMM methods
-in Section~\ref{sMatMul}, ultimately settling on outer product for implementing TableMult.
+We formally define matrix multiplication and compare inner and outer product methods
+in Section~\ref{sMatMul}, settling on outer product for implementing TableMult.
 We show TableMult's design as Accumulo iterators in Section~\ref{sTableMult}
-and test its scalability with experiments in Section~\ref{sPerformance}.
-We discuss design alternatives and related work in Section~\ref{sDiscussion}, 
-concluding in Section~\ref{sConclusions}.
+and test its scalability with Section~\ref{sPerformance}'s experiments.
+We discuss related work, design alternatives and optimizations in Section~\ref{sDiscussion}
+and conclude in Section~\ref{sConclusions}.
 
 %Background and Algorithms
 %Primer

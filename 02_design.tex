@@ -26,7 +26,7 @@ Sparse arithmetic requires these conditions, because otherwise zero operands cou
 
 We study two well known patterns for computing matrix multiplication:
 inner product and outer product \cite{kruskal1989techniques}. They differ in the order in which they perform
-the $\otimes$ and $\oplus$ operations.  The more common inner product approach runs the following %computes 
+the $\otimes$ and $\oplus$ operations.  The more common inner product approach runs the following: %computes 
 %each $\matr{C}(i,j)$ at once by computing the product of the row vector $\matr{A}(i,:)$ with
 %the column vector $\matr{B}(:,j)$
 
@@ -47,7 +47,7 @@ the $\otimes$ and $\oplus$ operations.  The more common inner product approach r
 %In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$% (using Accumulo's builtin summing combiners), the above approach can be rewritten as
 \noindent %computing each $\matr{C}(i,j)$ at once by performing inner product on vectors.
 performing inner product on vectors.
-For easier comparison, we rewrite the above approach with summation deferred as
+For easier comparison, we rewrite the above approach with summation deferred as:
 
 \removelatexerror
 \begin{algorithm}[H]
@@ -70,13 +70,13 @@ The inner-product is easy to ``pre-sum,'' an Accumulo term for applying a Combin
 locally before sending entries to a remote but globally-aware table combiner.
 % move to another section?
 %Inner product also generates output ``in order'' in a second sense: 
-Emitting sorted entries also allows inner product to be used in standard iterator stacks.
+Emitting sorted entries also permits inner product use in standard iterator stacks.
 %% It is also adventageous that inner product generates entries sorted by row 
 %% and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
 Despite inner product's order-preserving advantages, 
 outer product performs better for sparse matrices 
-because it passes through $\matr{A}$ and $\matr{B}$ once 
+because it passes through $\matr{A}$ and $\matr{B}$ only once 
 \cite{burkhardt2013big}\cite{burkhardt2014asking}.  
 Inner product's second-level loop repeats
 scans over all of $\matr{B}$ for each row of $\matr{A}$.
@@ -89,7 +89,7 @@ We found in performance tests that an outer-product approach performed an order 
 %(see Section~\ref{sPerformance})
 %whereas an outer product method ran in under 8.
 
-Outer product matrix multiply runs the following
+The outer product approach runs the following:
 
 \removelatexerror
 \begin{algorithm}[H]
@@ -104,9 +104,8 @@ Outer product matrix multiply runs the following
 
 \noindent %deferring outer product's summation, which we unfold as %where the operation $\times$ is outer (also called tensor or Carteisan) product on vectors, which we may unfold as
 performing outer %(also called tensor or Cartesian) 
-product
-on vectors, 
-which we unfold as
+product on vectors, 
+which unfolds as:
 
 \removelatexerror
 \begin{algorithm}[H]

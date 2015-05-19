@@ -17,15 +17,15 @@ These graph calculations are often best performed inside the database server.
 %% Users must subsequently implement complex clients and shuffle 
 %% data between Accumulo storage and engines for compute.
 The GraphBLAS standard provides a compact and efficient basis for
-a wide range of graph applications with a small number of sparse matrix operations. 
+a wide range of graph applications through a small number of sparse matrix operations. 
 %we propose 
-We implement GraphBLAS sparse matrix multiplication
+In this article, We implement GraphBLAS sparse matrix multiplication
 %inside the Accumulo database
 server-side
 by leveraging Accumulo's native, high-performance iterators.
 We compare the mathematics and performance 
-of inner- and outer-product implementations,
-and show how an outer-product implementation achieves optimal performance near
+of inner and outer product implementations,
+and show how an outer product implementation achieves optimal performance near
 Accumulo's peak write rate.
 % part of the Graphulo library
 We offer our work as a core component to the Graphulo library
