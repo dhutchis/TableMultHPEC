@@ -56,6 +56,9 @@
 \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
 \DeclarePairedDelimiter\paren{\left(}{\right)}
 
+\usepackage{siunitx}
+\sisetup{round-precision=2,round-mode=places,scientific-notation=true}
+
 % to allow [H] for algorithms
 % https://tex.stackexchange.com/questions/82271/multiple-algorithm2e-algorithms-in-two-column-documents/82272#82272
 \makeatletter
@@ -141,34 +144,36 @@
 \caption{Output Table $\matr{C}$ Sizes and Experiment Timings}% plotted in Figure~\ref{fTableMultPerf}}
 \label{tResultsParams}
 \begin{threeparttable}[c]
-\begin{tabular}{r|rr|rr|rr|rr|rr}
- & \multicolumn{2}{|c|}{Entries in Table $\matr{C}$} & \multicolumn{2}{|c|}{Graphulo 1 Tablet} & \multicolumn{2}{|c|}{D4M 1 Tablet} & \multicolumn{2}{|c|}{Graphulo 2 Tablets} & \multicolumn{2}{|c}{D4M 2 Tablets} \\
+\begin{tabular}{r|ll|ll|ll|ll|ll}
+ & \multicolumn{2}{c|}{Entries in Table $\matr{C}$} & \multicolumn{2}{c|}{Graphulo 1 Tablet} & \multicolumn{2}{c|}{D4M 1 Tablet} & \multicolumn{2}{c|}{Graphulo 2 Tablets} & \multicolumn{2}{c}{D4M 2 Tablets} \\
 SCALE & PartialProducts & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) \\             
 \hline
-10 & 8.05e+05 & 2.69e+05 & 2.86e+00 & 2.81e+05 & 3.02e+00 & 2.67e+05 & 2.02e+00 & 3.98e+05 & 2.80e+00 & 2.87e+05 \\
-\hline                                                                                                                   
-11 & 2.36e+06 & 8.15e+05 & 7.76e+00 & 3.04e+05 & 8.80e+00 & 2.68e+05 & 5.19e+00 & 4.55e+05 & 8.72e+00 & 2.71e+05 \\
-\hline                                                                                                                   
-12 & 6.82e+06 & 2.43e+06 & 2.20e+01 & 3.10e+05 & 2.66e+01 & 2.56e+05 & 1.63e+01 & 4.18e+05 & 2.62e+01 & 2.60e+05 \\
-\hline                                                                                                                   
-13 & 1.91e+07 & 7.04e+06 & 6.40e+01 & 2.99e+05 & 1.50e+02 & 1.27e+05 & 4.86e+01 & 3.93e+05 & 1.44e+02 & 1.33e+05 \\
-\hline                                                                                                                   
-14 & 5.27e+07 & 2.00e+07 & 1.82e+02 & 2.90e+05 & 5.79e+02 & 9.09e+04 & 1.36e+02 & 3.87e+05 & 5.59e+02 & 9.42e+04 \\
-\hline                                                                                                                   
-15 & 1.47e+08 & 5.83e+07 & 5.03e+02 & 2.93e+05 & 2.51e+03 & 5.86e+04 & 3.94e+02 & 3.74e+05 & 2.56e+03 & 5.75e+04 \\
-\hline                                                                                                                   
-16 & 4.00e+08 & 1.63e+08 & 1.39e+03 & 2.88e+05 &  &  & 1.18e+03 & 3.40e+05 &  &  \\
-\hline                                                                                                                   
-17 & 1.09e+09 & 4.59e+08 & 4.06e+03 & 2.67e+05 &  &  & 3.70e+03 & 2.94e+05 &  &  \\
-\hline                                                                                                                   
-18 & 2.94e+09 & 1.28e+09 & 1.21e+04 & 2.42e+05 &  &  & 1.14e+04 & 2.58e+05 &  &  \\
+10 & \num{804989.000} & \num{269404.000} & \num{2.865} & \num{281012.707} & \num{3.018} & \num{266771.720} & \num{2.022} & \num{398174.309} & \num{2.804} & \num{287060.355} \\             
+\hline                                                                                                                                                                                                          
+11 & \num{2361580.000} & \num{814644.000} & \num{7.758} & \num{304413.622} & \num{8.803} & \num{268259.547} & \num{5.189} & \num{455121.509} & \num{8.718} & \num{270898.575} \\            
+\hline                                                                                                                                                                                                          
+12 & \num{6816962.000} & \num{2430381.000} & \num{21.984} & \num{310090.248} & \num{26.601} & \num{256270.986} & \num{16.307} & \num{418039.002} & \num{26.182} & \num{260366.279} \\       
+\hline                                                                                                                                                                                                          
+13 & \num{19111689.000} & \num{7037007.000} & \num{63.969} & \num{298766.256} & \num{150.475} & \num{127009.402} & \num{48.623} & \num{393059.423} & \num{144.156} & \num{132575.978} \\    
+\hline                                                                                                                                                                                                          
+14 & \num{52656204.000} & \num{20029427.000} & \num{181.506} & \num{290106.916} & \num{579.243} & \num{90905.237} & \num{136.025} & \num{387107.096} & \num{559.271} & \num{94151.551} \\   
+\hline                                                                                                                                                                                                          
+15 & \num{147104084.000} & \num{58288789.000} & \num{502.864} & \num{292532.774} & \num{2510.389} & \num{58598.135} & \num{393.573} & \num{373765.880} & \num{2559.243} & \num{57479.523} \\
+\hline                                                                                                                                                                                                          
+16 & \num{400380031.000} & \num{163481262.000} & \num{1390.612} & \num{287916.484} &  &  & \num{1178.111} & \num{339849.273} &  &  \\                                                               
+\hline                                                                                                                                                                                                          
+17 & \num{1086789275.000} & \num{459198683.000} & \num{4064.990} & \num{267353.526} &  &  & \num{3699.671} & \num{293752.983} &  &  \\                                                              
+\hline                                                                                                                                                                                                          
+18 & %2.94 \times 10^9%
+%\num{2937549526} 
+& \num{1280878452.000} & \num{12148.744} & \num{241798.621} &  &  & \num{11369.009} & \num{258382.204} &  &  \\
 \end{tabular}
 %\begin{tablenotes}
 %\tnote{1}
 %\item [a] nnz($\matr{C}$) is the number of elements in output table $\matr{C}$ after all partial products sum together.
 %\end{tablenotes}
 \end{threeparttable}
-\vspace{-1.0em}
+\vspace{-1.5em}
 \end{table*}
 
 \input{04_conclusions.tex}
