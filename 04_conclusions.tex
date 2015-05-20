@@ -156,8 +156,9 @@ given limited data layout control and unknown data distribution.
 %% but such a consideration would require accessing and perhaps manipulating
 %% Accumulo's internal state and non-public API.
 %% We suggest this paper's approach as a balance between top performance and implementation stability.
+\pagebreak
 
-Nevertheless, possible design criteria are to select $P$ to minimize passes through $\matr{B}$,
+Nevertheless, possible design criteria are to select a small $P$ to minimize passes through $\matr{B}$,
 while also choosing $P$ large enough so that $\ceil{NL/P}$ entries fit in memory
 (dense matrix worst case), which guarantees complete pre-summing.
 The latter criterion may be relaxed with decreasing matrix density.

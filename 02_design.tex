@@ -287,7 +287,7 @@ we would have to either gather partial products at the client or initiate a full
 
 \subsubsection{Monitoring}
 RemoteWriteIterator never emits entries to the client by default. 
-One downside of this approach is that clients cannot precisely track the progress of a TableMult operation,
+One downside of this approach is that clients cannot precisely track progress of a TableMult operation,
 which may frustrate users expecting a more interactive computing experience.
 Clients could query the Accumulo monitor for read/write rates 
 or prematurely scan partial products written to $\matr{C}$, but both approaches are too coarse.
