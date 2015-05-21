@@ -56,7 +56,7 @@ but also
 which prior work has shown is a bottleneck for scans % writes?
 when iterator processing is light \cite{sawyer2013understanding}.
 %Enhancing Accumulo for non-Thrift, local access may 
-Such an enhancement would access a local tablet server by a method call 
+Such an enhancement would access a local tablet server by method call 
 in place of Scanners and BatchWriters.
 %use a new access inter-process chanel 
 %optimized for 
@@ -138,7 +138,7 @@ Figure~\ref{fInnerOuterSpectrum}'s center depicts the $P=2$ case.
 \vspace{-14pt}
 \caption{Tradeoffs between Inner and Outer Product}
 \label{fInnerOuterSpectrum}
-%\vspace{-2pt}
+\vspace{-4pt}
 \end{figure}
 
 
@@ -156,7 +156,7 @@ given limited data layout control and unknown data distribution.
 %% but such a consideration would require accessing and perhaps manipulating
 %% Accumulo's internal state and non-public API.
 %% We suggest this paper's approach as a balance between top performance and implementation stability.
-\pagebreak
+
 
 Nevertheless, possible design criteria are to select a small $P$ to minimize passes through $\matr{B}$,
 while also choosing $P$ large enough so that $\ceil{NL/P}$ entries fit in memory
@@ -197,12 +197,15 @@ We aspire to make a small step for Accumulo in the direction of NewSQL with curr
 
 In this work we showcase the design of TableMult, a Graphulo server-side implementation of the 
 SpGEMM GraphBLAS matrix math kernel in the Accumulo database.
-We compare inner and outer approaches and show how outer product 
-better fits Accumulo's iterator model.  The implementation shows excellent single node performance, achieving rates near 400,000 per second, which is the consistent with the single node peak write rate for Accumulo \cite{kepner2014achieving}.
+We compare inner and outer product approaches and show how outer product 
+better fits Accumulo's iterator model.  The implementation shows excellent single node performance, 
+achieving rates near 400,000 per second, 
+which is the consistent with the single node peak write rate for Accumulo \cite{kepner2014achieving}.
 Performance experiments show good scaling for scaled problem sizes and suggest good scaling for fixed size problems,
 but these require addditonal experiments on a larger cluster to confirm.
 
-In addition to topics from Section~\ref{sDiscussion}'s discussion, future research efforts include
+In addition to topics from Section~\ref{sDiscussion}'s discussion, 
+future research efforts include
 implementing the remaining GraphBLAS kernels, 
-developing graph algorithms that use the Graphulo, % atop the Graphulo library,
+developing graph algorithms that use the Graphulo library
 and delivering to the Accumulo community.

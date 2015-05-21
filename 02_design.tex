@@ -156,7 +156,7 @@ TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 
 We implement SpGEMM with three iterators placed on a BatchScan of table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
-The BatchScanner directs Accumulo to run the iterators on tablets of $\matr{B}$ in parallel.
+The BatchScanner directs Accumulo to run the iterators on $\matr{B}$'s tablets in parallel.
 %The: We place these iterators on  scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
 %that inform the client about TableMult progress. 
 %% Instead, the scan on table $\matr{B}$ reads from table $\matr{A}$T
@@ -167,7 +167,7 @@ The BatchScanner directs Accumulo to run the iterators on tablets of $\matr{B}$ 
 The key idea behind the TableMult iterators is that they divert normal dataflow by opening a BatchWriter,
 %reducing entries sent to the client to zero and instead sending 
 redirecting entries out-of-band to $\matr{C}$ via
-Accumulo's ingest channel that does not require sorted order. 
+Accumulo's unsorted ingest channel. % that does not require sorted order. 
 The scan itself emits no entries except for a small number of ``monitoring entries'' 
 that inform the client about TableMult progress.
 %Thus the TableMult iterators act as reduction iterators, even though they actually transmit 
@@ -178,6 +178,20 @@ that read remote Accumulo tables out-of-band.
 Scanners and BatchWriters are standard tools for Accumulo clients; 
 by creating them inside iterators, we enable client-side processing patterns
 within tablet servers.
+
+%An additional benefit 
+%Using iterators additionally
+%Placing TableMult within iterators reuses Acumulo's 
+Underlying our use of iterators, Scanners and BatchWriters are Accumulo's 
+standing thread pools. %, pre-created and ready for work
+Thread pools fulfill our low latency requirement by 
+executing upon receiving a request 
+at no more expense than a context switch.
+Scaling up may require tuning thread pool size
+to balance thread contention.
+% may require increasing thread pool size. % to ensure continuous availability.
+
+
 
 We illustrate TableMult's data flow in Figure~\ref{fIteratorStackSpGEMM},
 placing a Scanner on table $\matr{A^\tr}$
