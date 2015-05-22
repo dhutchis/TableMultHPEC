@@ -3,8 +3,8 @@
 The Apache Accumulo database excels at distributed storage
 and indexing
 and is ideally suited for storing graph data.
-Many big data graph analytics
-compute on graph data and persist the results back to the database.
+Many big data analytics
+compute on graph data and persist their results back to the database.
 These graph calculations are often best performed inside the database server. 
 %The Graphulo library is designed to take advantage of 
 %Accumulo's graph capabilities
@@ -19,7 +19,7 @@ These graph calculations are often best performed inside the database server.
 The GraphBLAS standard provides a compact and efficient basis for
 a wide range of graph applications through a small number of sparse matrix operations. 
 %we propose 
-In this article, We implement GraphBLAS sparse matrix multiplication
+In this article, we implement GraphBLAS sparse matrix multiplication
 %inside the Accumulo database
 server-side
 by leveraging Accumulo's native, high-performance iterators.

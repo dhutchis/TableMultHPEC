@@ -96,7 +96,7 @@ instead writing individual partial products to $\matr{C}$.
 Table~\ref{tResultsParams} quantifies that outer product writes
 2.5 to 3 times more entries than inner product for power law inputs.
 In the worst case, multiplying a fully dense $N \times M$ with an $M \times L$ matrix,
-outer product emits $m$ times more entries than inner product.
+outer product emits $M$ times more entries than inner product.
 
 
 
@@ -166,17 +166,20 @@ The latter criterion may be relaxed with decreasing matrix density.
 
 \subsection{TableMult in Algorithms}
 Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
-Suppose we have a program $\matr{E} = \matr{A B}; \matr{F} = \matr{C D}; \matr{G} = \matr{E F}$.
-We would save two round trips to disk if we could mark $\matr{E}$ and $\matr{F}$ as 
+Suppose we have a program $\matr{C} = \matr{A B}; \matr{D} = \matr{C C}; \matr{A} \mathrel{+}= \matr{D}$.
+We would save two round trips to disk if we could mark $\matr{C}$ and $\matr{D}$ as 
 ``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
 and not written to Hadoop if possible.
+Combiners in TableMult do enable one optimization:
+summing $\matr{CC}$ into $\matr{A}$ directly by rewriting the program as 
+$\matr{C} = \matr{A B}; \matr{A} \mathrel{+}= \matr{CC}$.
 
 A \emph{pipelining} optimization streams entries from a TableMult 
 to computations taking its result as input. 
 Outer product pipelining is difficult
 because it cannot guarantee writing every partial product for a particular element 
  to $\matr{C}$ until it finishes,
-whereas inner product's complete pre-summing emits elements ready for downstream use.
+whereas inner product's complete pre-summing emits elements ready for use downstream.
 More ambitiously, \emph{loop fusion} merges iterator stacks 
 for successive computations into one. 
 

@@ -13,7 +13,7 @@ defines entries of result matrix $\matr{C}$ as
 \[ \matr{C}(i,j) = \bigoplus_{k=1}^M \matr{A}(i,k) \otimes \matr{B}(k,j) \]
 We call intermediary results of $\otimes$ operations \emph{partial products}.
 
-In the case of sparse matrices, we only perform $\oplus$ and $\otimes$ where both operands are nonzero,
+In the case of sparse matrices, we only perform $\oplus$ and $\otimes$ when both operands are nonzero,
 an optimization stemming from requiring that 0 is an additive identity of $\oplus$ such that $a \oplus 0 = 0 \oplus a = a$,
 and that 0 is a multiplicative annhilator of $\otimes$ such that $a \otimes 0 = 0 \otimes a = 0$.
 Sparse arithmetic requires these conditions, because otherwise zero operands could generate nonzero results.
@@ -79,7 +79,7 @@ outer product performs better for sparse matrices
 because it passes through $\matr{A}$ and $\matr{B}$ only once 
 \cite{burkhardt2013big}\cite{burkhardt2014asking}.  
 Inner product's second-level loop repeats
-scans over all of $\matr{B}$ for each row of $\matr{A}$.
+a scan over all of $\matr{B}$ for each row of $\matr{A}$.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
 multiple passes over $\matr{B}$ translate to multiple Accumulo scans that each require a disk read.
@@ -131,7 +131,7 @@ Once we finish processing a column of $\matr{A}$ and row of $\matr{B}$,
 we never need read them again.% (i.e., we never need to restart the top-level $k$ loop).
 
 In terms of memory usage, outer product works best when either the matching row or column fits in memory.
-If neither fits, then we could run the algorithm 
+If neither fits, we could run the algorithm 
 with a ``no memory assumption'' streaming approach
 by re-reading $\matr{B}$'s rows while streaming through $\matr{A}$'s columns 
 (or vice versa by symmetry of $i$ and $j$),
@@ -154,7 +154,7 @@ TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 \subsection{TableMult Iterators}
 \label{sTableMult}
 
-We implement SpGEMM with three iterators placed on a BatchScan of table $\matr{B}$:
+TableMult uses three iterators placed on a BatchScan of table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
 The BatchScanner directs Accumulo to run the iterators on $\matr{B}$'s tablets in parallel.
 %The: We place these iterators on  scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
@@ -172,7 +172,7 @@ The scan itself emits no entries except for a small number of ``monitoring entri
 that inform the client about TableMult progress.
 %Thus the TableMult iterators act as reduction iterators, even though they actually transmit 
 %a huge stream of entries out-of-band to another Accumulo table.
-We enable multi-table iterator dataflow by opening Scanners 
+We permit multi-table iterator dataflow by opening Scanners 
 that read remote Accumulo tables out-of-band.
 %which in the case of SpGEMM means scanning table $\matr{A^\tr}$.
 Scanners and BatchWriters are standard tools for Accumulo clients; 
@@ -289,7 +289,7 @@ We lazily sum partial products by placing a Combiner subclass implementing BigDe
 on table $\matr{C}$ at scan, minor and major compaction scopes.
 Thus, $\oplus$ occurs sometime after RemoteWriteIterator writes partial products to $\matr{C}$
 yet necessarily before entries from $\matr{C}$ may be seen such that we always achieve correctness.
-Summation could happen when Accumulo flushes table $\matr{C}$'s entries cached in memory to a new RFile, 
+Summation could happen when Accumulo flushes $\matr{C}$'s entries cached in memory to a new RFile, 
 when Accumulo compacts RFiles together, or when a client scans $\matr{C}$. 
 
 The key algebraic requirement for implementing $\oplus$ inside a Combiner

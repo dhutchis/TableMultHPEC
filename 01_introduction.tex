@@ -11,13 +11,13 @@ NoSQL databases such as Apache Accumulo
 concentrate on high performance ingest and scans~\cite{sen2013benchmarking}. 
 While fast ingest and scans solve some big data problems,
 more complex scenarios involve performing tasks
-such as data enrichment, graph algorithms, and clustering analytics. These techniques
+such as data enrichment, graph algorithms and clustering analytics. These techniques
 often move data from a database %or storage engine 
 to a compute node. The ability to
 %perform enrichment, algorithms or analytics directly in a database or storage engine
 compute directly in a database can lead to benefits including 
 %can provide benefits such as 
-\emph{selective access}, \emph{data locality}, and \emph{infrastructure reuse}. 
+\emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}. 
 
 Apache Accumulo is designed to deliver
 fast answers to queries for data subsets along indexed attributes. 
@@ -26,9 +26,9 @@ fast answers to queries for data subsets along indexed attributes.
 % %as opposed to YARN or MapReduce directly on HDFS, are 
 The Accumulo server processes typically run on the physical nodes where data is stored and cached.
 Performing computations inside Accumulo can avoid unnecessary network transfer,
-effectively moving ``compute to data''
+effectively moving ``compute to data'' like a stored procedure,
 in contrast to client-server models that move ``data to compute.''
-Performing computations in the Accumulo server also reuses its distributed infrastructure
+Performing computation in the Accumulo server also reuses its distributed infrastructure
 such as write-ahead logging, fault-tolerant execution, and 
 parallel load balancing of data.
 

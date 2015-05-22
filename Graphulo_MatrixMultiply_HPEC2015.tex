@@ -59,6 +59,17 @@
 \usepackage{siunitx}
 \sisetup{round-precision=2,round-mode=places,scientific-notation=true}
 
+\usepackage{multirow}
+\usepackage{adjustbox}
+\usepackage{array}
+\newcolumntype{R}[2]{%
+    >{\adjustbox{angle=#1,lap=\width-(#2)}\bgroup}%
+    l%
+    <{\egroup}%
+}
+%\newcommand*\rot{\multirow{2}{R{45}{2em}}}% no optional argument here, please!
+
+
 % to allow [H] for algorithms
 % https://tex.stackexchange.com/questions/82271/multiple-algorithm2e-algorithms-in-two-column-documents/82272#82272
 \makeatletter
@@ -139,14 +150,14 @@
 \input{02_design.tex}
 \input{03_performance.tex}
 \begin{table*}[tb]
-%\vspace{-0.5em}
+\vspace{-1.5em}
 \centering                                                                                                           
 \caption{Output Table $\matr{C}$ Sizes and Experiment Timings}% plotted in Figure~\ref{fTableMultPerf}}
 \label{tResultsParams}
 \begin{threeparttable}[c]
 \begin{tabular}{r|ll|ll|ll|ll|ll}
- & \multicolumn{2}{c|}{Entries in Table $\matr{C}$} & \multicolumn{2}{c|}{Graphulo 1 Tablet} & \multicolumn{2}{c|}{D4M 1 Tablet} & \multicolumn{2}{c|}{Graphulo 2 Tablets} & \multicolumn{2}{c}{D4M 2 Tablets} \\
-SCALE & PartialProducts & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) \\             
+\multirow{2}{1.75em}{\adjustbox{angle=30,lap=\width-3.75em}{SCALE}} & \multicolumn{2}{c|}{Entries in Table $\matr{C}$} & \multicolumn{2}{c|}{Graphulo 1 Tablet} & \multicolumn{2}{c|}{D4M 1 Tablet} & \multicolumn{2}{c|}{Graphulo 2 Tablets} & \multicolumn{2}{c}{D4M 2 Tablets} \\
+ & PartialProducts & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) \\             
 \hline
 10 & \num{804989.000} & \num{269404.000} & \num{2.865} & \num{281012.707} & \num{3.018} & \num{266771.720} & \num{2.022} & \num{398174.309} & \num{2.804} & \num{287060.355} \\             
 \hline                                                                                                                                                                                                          
@@ -173,7 +184,7 @@ SCALE & PartialProducts & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (p
 %\item [a] nnz($\matr{C}$) is the number of elements in output table $\matr{C}$ after all partial products sum together.
 %\end{tablenotes}
 \end{threeparttable}
-\vspace{-1.5em}
+\vspace{-2em}
 \end{table*}
 
 \input{04_conclusions.tex}
@@ -290,9 +301,9 @@ SCALE & PartialProducts & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (p
 %\end{thebibliography}
 
 \bibliographystyle{IEEEtran}
-\balance
-\bibliography{10_bibliography}
 
+\bibliography{10_bibliography}
+\balance
 %\appendix
 %\section*{Performance Numbers}
 
