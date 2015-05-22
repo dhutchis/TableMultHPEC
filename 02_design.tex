@@ -44,7 +44,7 @@ the $\otimes$ and $\oplus$ operations.  The more common inner product approach r
 
 %\noindent %deferring the inner product's summation, %operation $\cdot$ is inner (also called dot) product on vectors, 
 %\todo{It is not desirable to defer $\oplus$ because it means we write more individual entries to C.}
-%In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$% (using Accumulo's builtin summing combiners), the above approach can be rewritten as
+%In a database context where it is desirable to to defer additions to be performed by the output table $\matr{C}$% (using Accumulo's builtin summing Combiners), the above approach can be rewritten as
 \noindent %computing each $\matr{C}(i,j)$ at once by performing inner product on vectors.
 performing inner product on vectors.
 For easier comparison, we rewrite the above approach with summation deferred as:
@@ -66,8 +66,8 @@ Inner product has the advantage of generating entries in sorted order:
 the third-level loop generates all partial products needed 
 to compute a particular element $\matr{C}(i,j)$ consecutively.
 The $\oplus$ applies immediately after each third-level loop to obtain an element in $\matr{C}$.
-The inner-product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
-locally before sending entries to a remote but globally-aware table combiner.
+The inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
+locally before sending entries to a remote but globally-aware table Combiner.
 % move to another section?
 %Inner product also generates output ``in order'' in a second sense: 
 Emitting sorted entries also permits inner product use in standard iterator stacks.
@@ -83,7 +83,7 @@ scans over all of $\matr{B}$ for each row of $\matr{A}$.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
 multiple passes over $\matr{B}$ translate to multiple Accumulo scans that each require a disk read.
-We found in performance tests that an outer-product approach performed an order of magnitude better than an inner-product approach.
+We found in performance tests that an outer product approach performed an order of magnitude better than an inner product approach.
 %multiple scans over $\matr{B}$ 
 %performed an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs 
 %(see Section~\ref{sPerformance})

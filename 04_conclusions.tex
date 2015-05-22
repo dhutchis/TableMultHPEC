@@ -199,8 +199,8 @@ In this work we showcase the design of TableMult, a Graphulo server-side impleme
 SpGEMM GraphBLAS matrix math kernel in the Accumulo database.
 We compare inner and outer product approaches and show how outer product 
 better fits Accumulo's iterator model.  The implementation shows excellent single node performance, 
-achieving rates near 400,000 per second, 
-which is the consistent with the single node peak write rate for Accumulo \cite{kepner2014achieving}.
+achieving write rates near 400,000 per second, 
+which is consistent with the single node peak write rate for Accumulo \cite{kepner2014achieving}.
 Performance experiments show good scaling for scaled problem sizes and suggest good scaling for fixed size problems,
 but these require addditonal experiments on a larger cluster to confirm.
 
