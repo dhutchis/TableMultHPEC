@@ -1,7 +1,7 @@
 # input file name.  This defines the name of the file you want to latex
 # the make file will automatically look for INPUT.tex as the latex file
 # and will look for a INPUT.bib file for the bibliography
-INPUT=SpGEMM_Accumulo_HPEC
+INPUT=Graphulo_MatrixMultiply_HPEC2015
 BIBFILE=10_bibliography
 
 #commands 
