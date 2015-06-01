@@ -7,12 +7,12 @@
 %Accumulo is well-known as a high performance NoSQL database with respect to ingest and scans \cite{sen2013benchmarking}.
 %The next step past ingesting and scanning is computing---running enrichment, algorithms and analytics.
 
-NoSQL databases such as Apache Accumulo
-concentrate on high performance ingest and scans~\cite{sen2013benchmarking}. 
+The Apache Accumulo NoSQL database
+was designed for high performance ingest and scans~\cite{sen2013benchmarking}. 
 While fast ingest and scans solve some big data problems,
 more complex scenarios involve performing tasks
 such as data enrichment, graph algorithms and clustering analytics. These techniques
-often move data from a database %or storage engine 
+often require moving data from a database %or storage engine 
 to a compute node. The ability to
 %perform enrichment, algorithms or analytics directly in a database or storage engine
 compute directly in a database can lead to benefits including 
@@ -27,7 +27,7 @@ fast answers to queries for data subsets along indexed attributes.
 The Accumulo server processes typically run on the physical nodes where data is stored and cached.
 Performing computations inside Accumulo can avoid unnecessary network transfer,
 effectively moving ``compute to data'' like a stored procedure,
-in contrast to client-server models that move ``data to compute.''
+in contrast to client-server models that move ``data to compute''.
 Performing computation in the Accumulo server also reuses its distributed infrastructure
 such as write-ahead logging, fault-tolerant execution, and 
 parallel load balancing of data.
@@ -60,7 +60,7 @@ We call our implementation of SpGEMM in Accumulo \textsc{TableMult}, short for m
 Accumulo tables have many similarities to sparse matrices, though a more precise mathematical definition is Associative Arrays 
 \cite{kepner2014gabb}. For this work, we concentrate on
 large distributed tables that may not fit in memory and use a streaming
-approach that leverages Accumulo's builtin distributed infrastructure.
+approach that leverages Accumulo's built-in distributed infrastructure.
 % Because Accumulo tables may span Hadoop clusters,
 % we never assume a table fits in memory
 % and instead take a streaming approach that distributes with Accumulo's infrastructure.
@@ -76,10 +76,10 @@ to enable analysts to explore graph data interactively.
 
 We review Accumulo and its model for server-side computation, iterator stacks, 
 in Section~\ref{sAccumuloIterators}.
-We formally define matrix multiplication and compare inner and outer product methods
+We define matrix multiplication and compare inner and outer product methods
 in Section~\ref{sMatMul}, settling on outer product for implementing TableMult.
 We show TableMult's design as Accumulo iterators in Section~\ref{sTableMult}
-and test its scalability with Section~\ref{sPerformance}'s experiments.
+and test TableMult's scalability with experiments in Section~\ref{sPerformance}.
 We discuss related work, design alternatives and optimizations in Section~\ref{sDiscussion}
 and conclude in Section~\ref{sConclusions}.
 
@@ -126,7 +126,7 @@ However, they are more powerful than Java iterators in that they can seek to arb
 in the data stream. % (top-level system iterators perform actual disk seeks).
 They also have two constraints: 
 the end of the iterator stack should emit entries in sorted order,
-and iterators must not maintain volatile state such as threads, open files or sockets,
+and iterators must not maintain volatile state such as threads, open files or sockets
 because Accumulo may destroy, re-create and re-seek an iterator stack
 between function calls without allowing time to clean up.
 

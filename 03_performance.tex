@@ -25,7 +25,7 @@ We compare Graphulo TableMult performance to D4M as a baseline because
 a user with one client machine's best alternative is reading input graphs from Accumulo, 
 multiplying them at the client, and inserting the result back into Accumulo.
 
-D4M stores tables as Associative Array objects in Matlab.  
+D4M stores tables as Associative Array objects in \matlab{}.  
 Because Assoc Array multplication runs fast in memory, 
 D4M bottlenecks on reading data from Accumulo and especially on writing back results.
 We consequently expect TableMult to outperform D4M 
@@ -67,17 +67,17 @@ so that Accumulo redistributes the tables' entries into the assigned tablets.
 as in step~\ref{ePreSplit1} and~\ref{ePreSplit1Compact}.
 \item Run and time the D4M equivalent of TableMult:
  \begin{enumerate}
- \item Scan both input tables into D4M Associative Array objects in Matlab memory.
- \item Convert the string values from Accumulo into numeric values for each Assoc.
- \item Multiply the transpose of the first Assoc with the second Assoc.
- \item Convert the result Assoc back to String values and insert them into Accumulo.
+ \item Scan both input tables into D4M Associative Array objects in \matlab{} memory.
+ \item Convert the string values from Accumulo into numeric values for each Associative Array.
+ \item Multiply the transpose of the first Associative Array with the second.
+ \item Convert the result Associative Array back to String values and insert them into Accumulo.
  \end{enumerate}
 \end{enumerate}
 
 %\subsection{Environment}
-We conduct the experiments on a Ubuntu linux laptop with 16GB RAM and two dual-core Intel i7 processors%at 3GHz
-. We use single-instance Accumulo 1.6.1, Hadoop 2.6.0 and ZooKeeper 3.4.6.
-We allocate 2GB of memory to the Accumulo tablet server initially
+We conducted the experiments on a Ubuntu Linux laptop with 16GB RAM and two dual-core Intel i7 processors%at 3GHz
+. We used single-instance Accumulo 1.6.1, Hadoop 2.6.0 and ZooKeeper 3.4.6.
+We allocated 2GB of memory to the Accumulo tablet server initially
 (allowing growth in 500MB steps),
 1GB for native in-memory maps and 256MB for data and index cache.
 
@@ -85,23 +85,23 @@ We allocate 2GB of memory to the Accumulo tablet server initially
 We chose not to use more than two tablets per table because more threads would run
 than the laptop could handle.  Each additional tablet can potentially add the following threads:
 \begin{enumerate}
-\item Table $\matr{A}^\tr$ server-side scan thread
+\item Table $\matr{A}^\tr$ server-side scan thread;
 \item Table $\matr{A}^\tr$ client-side scan thread,
 
-$\quad$ running from RemoteSourceIterator
+$\quad$ running from RemoteSourceIterator;
 \item Table $\matr{B}$ server-side scan/multiply thread,
 
-$\quad$ running a TableMult iterator stack
+$\quad$ running a TableMult iterator stack;
 \item Table $\matr{B}$ client-side scan thread, 
 
-$\quad$ running from the initiating client; mostly idle
-\item Table $\matr{C}$ server-side write thread
+$\quad$ running from the initiating client, mostly idle;
+\item Table $\matr{C}$ server-side write thread;
 \item Table $\matr{C}$ client-side write thread,
 
-$\quad$ running from RemoteWriteIterator
+$\quad$ running from RemoteWriteIterator; and
 \item Table $\matr{C}$ server-side minor compaction threads,
 
-$\quad$ running with a Combiner implementing $\oplus$
+$\quad$ running with a Combiner implementing $\oplus$.
 \end{enumerate}
 
 \begin{figure}[tbh]
@@ -131,12 +131,12 @@ in rate measurements. % (in partial products per second).
 %% our rate measurements (in partial products per second) do not include summing 
 %% and disk flush operations Accumulo performs during minor compaction.
 
-For the fixed size problem, the best results we could achieve are two-tablet rates
+For the fixed size problem, the best results we could achieve are two-tablet rates at
 double the one-tablet rates at every problem size.
 Our experiment shows that Graphulo two-tablet rates perform up to 1.5x better
 than one-tablet rates at lower SCALEs. %with degraded performance at higher SCALEs.  
 We attribute TableMult's shortfall to high processor contention for the laptop's four cores as a result of 
-the 14 threads that may run concurrently with two tablets on; in fact,
+the 14 threads that may run concurrently when each table has two tablets; in fact,
 processor usage hovered near 100\% for all four cores throughout the two-tablet experiments.
 We expect better scaling when running our experiment 
 in larger Accumulo clusters that can handle more degrees of parallelism.
