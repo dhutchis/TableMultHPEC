@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usepackage{footnote}
 \usepackage{balance}
+%\usepackage{titlesec}
 
 %\ifCLASSINFOpdf
 %  \usepackage[pdftex]{graphicx}
@@ -86,6 +87,25 @@
 \newcommand{\matlab}{\textsc{Matlab}}
 
 
+\makeatletter
+\renewenvironment{thebibliography}[1]{%
+%\vspace*{-6pt}
+  \@xp\section\@xp*\@xp{\refname}%
+  \normalfont\footnotesize\labelsep .5em\relax
+  \renewcommand\theenumiv{\arabic{enumiv}}\let\p@enumiv\@empty
+\vspace*{-2pt}% NEW
+  \list{\@biblabel{\theenumiv}}{\settowidth\labelwidth{\@biblabel{#1}}%
+    \leftmargin\labelwidth \advance\leftmargin\labelsep
+    \usecounter{enumiv}}%
+  \sloppy \clubpenalty\@M \widowpenalty\clubpenalty
+  \sfcode`\.=\@m
+}{%
+  \def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+  \endlist
+}
+\makeatother
+
+
 \begin{document}
 
 \title{Graphulo Implementation of Server-Side \\ Sparse Matrix Multiply in the Accumulo Database}
@@ -148,12 +168,20 @@
 % creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
+% Attempt to reduce spacing for \times
+%% %\let\stimes\times
+%% \renewcommand{\times}[0]{%
+%% %{\ooalign{$\phantom{0}$\cr\hidewidth$\scriptstyle\times$\cr}}%
+%% {\mkern-2mu\times\mkern-2mu}%
+%% }
+%% %\renewcommand{\times}[0]{\stimes{}}
+
 
 \input{01_introduction.tex}
 \input{02_design.tex}
 \input{03_performance.tex}
 \begin{table*}[tb]
-\vspace{-1.5em}
+\vspace{-1.75em}
 \centering                                                                                                           
 \caption{Output Table $\matr{C}$ Sizes and Experiment Timings}% plotted in Figure~\ref{fTableMultPerf}}
 \label{tResultsParams}
@@ -187,7 +215,7 @@
 %\item [a] nnz($\matr{C}$) is the number of elements in output table $\matr{C}$ after all partial products sum together.
 %\end{tablenotes}
 \end{threeparttable}
-\vspace{-2em}
+\vspace{-2.5em}
 \end{table*}
 
 \input{04_conclusions.tex}
@@ -305,7 +333,9 @@
 
 \bibliographystyle{IEEEtran}
 
+%\titlespacing*{\section}{0pt}{-80pt}{40pt}
 \bibliography{10_bibliography}
+
 \balance
 %\appendix
 %\section*{Performance Numbers}
