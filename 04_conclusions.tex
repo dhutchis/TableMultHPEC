@@ -166,13 +166,13 @@ The latter criterion may be relaxed with decreasing matrix density.
 
 \subsection{TableMult in Algorithms}
 Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
-Suppose we have a program $\matr{C} = \matr{A B}; \matr{D} = \matr{C C}; \matr{A} \mathrel{+}= \matr{D}$.
+Suppose we have a program $\matr{C} = \matr{A B}; \matr{D} = \matr{C C}; \matr{A} \mathrel{\oplus}= \matr{D}$.
 We would save two round trips to disk if we could mark $\matr{C}$ and $\matr{D}$ as 
 ``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
 and not written to Hadoop if possible.
 Combiners in TableMult do enable one optimization:
 summing $\matr{CC}$ into $\matr{A}$ directly by rewriting the program as 
-$\matr{C} = \matr{A B}; \matr{A} \mathrel{+}= \matr{CC}$.
+$\matr{C} = \matr{A B}; \matr{A} \mathrel{\oplus}= \matr{CC}$.
 
 A \emph{pipelining} optimization streams entries from a TableMult 
 to computations taking its result as input. 
