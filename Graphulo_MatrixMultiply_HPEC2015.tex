@@ -118,7 +118,7 @@
 %% \{vijayg, kepner, bamiller\}@ll.mit.edu}}
 
 \author[D. Hutchison et al.]
-       {Dylan Hutchison,$^{{\dagger}*}$ Jeremy Kepner,$^{{\dagger}{\ddagger}{\diamond}*}$ Vijay Gadepally,$^{{\dagger}{\ddagger}*}$ Adam Fuchs$^+$ \vspace{6pt}
+       {Dylan Hutchison,$^{{\dagger}*}\;$ Jeremy Kepner,$^{{\dagger}{\ddagger}{\diamond}*}\;$ Vijay Gadepally,$^{{\dagger}{\ddagger}*}\;$ Adam Fuchs$^+$ \vspace{6pt}
          \\
          $^{\dagger}$MIT Lincoln Laboratory, 
          $^{\ddagger}$MIT Computer Science \& AI Laboratory, \\
@@ -168,13 +168,9 @@
 % creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
-% Attempt to reduce spacing for \times
-%% %\let\stimes\times
-%% \renewcommand{\times}[0]{%
-%% %{\ooalign{$\phantom{0}$\cr\hidewidth$\scriptstyle\times$\cr}}%
-%% {\mkern-2mu\times\mkern-2mu}%
-%% }
-%% %\renewcommand{\times}[0]{\stimes{}}
+% Reduce space for times; go back to original spacing after table
+\let\stimes\times
+\renewcommand{\times}[0]{{\,\stimes{}\,}}
 
 
 \input{01_introduction.tex}
@@ -186,9 +182,11 @@
 \caption{Output Table $\matr{C}$ Sizes and Experiment Timings}% plotted in Figure~\ref{fTableMultPerf}}
 \label{tResultsParams}
 \begin{threeparttable}[c]
+\addtolength{\tabcolsep}{-0.5pt}  
 \begin{tabular}{r|ll|ll|ll|ll|ll}
+%\setlength{\medmuskip}{1\medmuskip}
 \multirow{2}{1.75em}{\adjustbox{angle=30,lap=\width-3.75em}{SCALE}} & \multicolumn{2}{c|}{Entries in Table $\matr{C}$} & \multicolumn{2}{c|}{Graphulo 1 Tablet} & \multicolumn{2}{c|}{D4M 1 Tablet} & \multicolumn{2}{c|}{Graphulo 2 Tablets} & \multicolumn{2}{c}{D4M 2 Tablets} \\
- & PartialProducts & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) \\             
+ & PartialProducts\hspace{-0.75em} & AfterSum & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) & Time (s) & Rate (pp/s) \\             
 \hline
 10 & \num{804989.000} & \num{269404.000} & \num{2.865} & \num{281012.707} & \num{3.018} & \num{266771.720} & \num{2.022} & \num{398174.309} & \num{2.804} & \num{287060.355} \\             
 \hline                                                                                                                                                                                                          
@@ -217,6 +215,8 @@
 \end{threeparttable}
 \vspace{-2.5em}
 \end{table*}
+
+\renewcommand{\times}[0]{\stimes}
 
 \input{04_conclusions.tex}
 
