@@ -38,7 +38,7 @@ the $\otimes$ and $\oplus$ operations.  The more common inner product approach r
 \SetKw{emit}{emit}
 \fore($i = 1\col N$){
 \fore($j = 1\col L$){
-\emit{$\matr{A}(i,:)  \matr{B}(:,j)$}
+{$\matr{C}(i,j) \mathrel{\oplus}= \matr{A}(i,:)  \matr{B}(:,j)$}
 }}
 \vspace{\algspace}
 \end{algorithm}
@@ -58,7 +58,7 @@ For easier comparison, we rewrite the above approach with summation deferred as:
 \fore($i = 1\col N$){
 \fore($j = 1\col L$){
 \fore($k = 1\col M$){
-\emit{$\matr{A}(i,k) \otimes \matr{B}(k,j)$}
+{$\matr{C}(i,j) \mathrel{\oplus}= \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}
 \vspace{\algspace}
 \end{algorithm}
@@ -67,11 +67,11 @@ Inner product has the advantage of generating entries in sorted order:
 the third-level loop generates all partial products needed 
 to compute a particular element $\matr{C}(i,j)$ consecutively.
 The $\oplus$ applies immediately after each third-level loop to obtain an element in $\matr{C}$.
-The inner product is easy to ``pre-sum,'' an Accumulo term for applying a Combiner
+Inner product is therefore easy to ``pre-sum,'' an Accumulo term for applying a Combiner
 locally before sending entries to a remote but globally-aware table Combiner.
 % move to another section?
 %Inner product also generates output ``in order'' in a second sense: 
-Emitting sorted entries also permits inner product use in standard iterator stacks.
+Emitting sorted entries also facilitates inner product use in standard iterator stacks and easier operation pipelining.
 %% It is also adventageous that inner product generates entries sorted by row 
 %% and column, which allows inner product to be used in standard iterator stacks that require sorted output.
 
@@ -84,7 +84,7 @@ a scan over all of $\matr{B}$ for each row of $\matr{A}$.
 %The same effect holds if we flipped the process symmetrically.
 Under our assumption that we cannot fit $\matr{B}$ entirely in memory,
 multiple passes over $\matr{B}$ translate to multiple Accumulo scans that each require a disk read.
-We found in performance tests that an outer product approach performed an order of magnitude better than an inner product approach.
+We found in performance tests that an outer product approach performs an order of magnitude better than an inner product approach.
 %multiple scans over $\matr{B}$ 
 %performed an order of magnitude worse, taking over 100 seconds to multiply SCALE 11 inputs 
 %(see Section~\ref{sPerformance})
@@ -98,15 +98,16 @@ The outer product approach runs the following:
 \SetKwBlock{fore}{for}{} 
 \SetKw{emit}{emit}
 \fore($k = 1\col M$){
-\emit{$\matr{A}(:,k) \matr{B}(k,:)$}
+{$\matr{C} \mathrel{\oplus}= \matr{A}(:,k) \matr{B}(k,:)$}
 }
 \vspace{\algspace}
 \end{algorithm}
 
 \noindent %deferring outer product's summation, which we unfold as %where the operation $\times$ is outer (also called tensor or Carteisan) product on vectors, which we may unfold as
 performing outer %(also called tensor or Cartesian) 
-product on vectors, 
-which unfolds as:
+product on vectors that corresponds to many elements of $\matr{C}$. %generates partial products for
+Unfolding outer product reveals them %individual elements as:
+as:
 
 \removelatexerror
 \begin{algorithm}[H]
@@ -116,15 +117,20 @@ which unfolds as:
 \fore($k = 1\col M$){
 \fore($i = 1\col N$){
 \fore($j = 1\col L$){
-\emit{$ \matr{A}(i,k) \otimes \matr{B}(k,j)$}
+{$\matr{C}(i,j) \mathrel{\oplus}=  \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}
 \vspace{\algspace}
 \end{algorithm}
 
-Outer product emits partial products in unsorted order.
-This is due to moving the $i$ and $j$ loops
-that determine partial product position
-below the top-level $k$ loop.
+Compared to inner product, outer product moves the $k$ loop
+above the $i$ and $j$ loops that determine position in $\matr{C}$.
+The switch results in generating partial products out of order.
+
+%% Multiple $\matr{C}$ elements per outer product results in unsorted order.
+%% Outer product generates partial products in unsorted order.
+%% This is due to moving the $i$ and $j$ loops
+%% that determine partial product position
+%% below the top-level $k$ loop.
 
 On the other hand, outer product only requires a single pass over both input matrices.
 This is because the top-level $k$ loop fixes a dimension of both $\matr{A}$ and $\matr{B}$.
