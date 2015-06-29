@@ -165,14 +165,27 @@ The latter criterion may be relaxed with decreasing matrix density.
 
 
 \subsection{TableMult in Algorithms}
+%% Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
+%% Suppose we have a program $\matr{C} = \matr{A B}; \matr{D} = \matr{CC}; \matr{A} \mathrel{\oplus}= \matr{D}$.
+%% We would save two round trips to disk if we could mark $\matr{C}$ and $\matr{D}$ as 
+%% ``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
+%% and not written to Hadoop if possible.
+%% Combiners in TableMult do enable one optimization:
+%% summing $\matr{CC}$ into $\matr{A}$ directly by rewriting the program as 
+%% $\matr{C} = \matr{AB}; \matr{A} \mathrel{\oplus}= \matr{CC}$.
+
 Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
-Suppose we have a program $\matr{C} = \matr{A B}; \matr{D} = \matr{C C}; \matr{A} \mathrel{\oplus}= \matr{D}$.
+Given row $\matr{A}$ of starting vertices and graph adjacency matrix $\matr{B}$, 
+suppose we wish to union the vertices reached in two steps from those in A into the vector A via the program
+ $\matr{C} = \matr{AB}; \matr{D} = \matr{CB}; \matr{A} \mathrel{\oplus}= \matr{D}$,
+as one way of implementing the calculation $\matr{A} \mathrel{\oplus}= \matr{AB}^2$.
+Such calculations are useful for finding vertices reachable in an even number of steps.
 We would save two round trips to disk if we could mark $\matr{C}$ and $\matr{D}$ as 
 ``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
 and not written to Hadoop if possible.
 Combiners in TableMult do enable one optimization:
-summing $\matr{CC}$ into $\matr{A}$ directly by rewriting the program as 
-$\matr{C} = \matr{A B}; \matr{A} \mathrel{\oplus}= \matr{CC}$.
+summing $\matr{CB}$ into $\matr{A}$ directly by rewriting the program as 
+$\matr{C} = \matr{AB}; \matr{A} \mathrel{\oplus}= \matr{CB}$.
 
 A \emph{pipelining} optimization streams entries from a TableMult 
 to computations taking its result as input. 
