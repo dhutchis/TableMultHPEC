@@ -26,7 +26,7 @@ a user with one client machine's best alternative is reading input graphs from A
 multiplying them at the client, and inserting the result back into Accumulo.
 
 D4M stores tables as Associative Array objects in \matlab{}.  
-Because Assoc Array multplication runs fast in memory, 
+Because Assoc Array multiplication runs fast in memory, 
 D4M bottlenecks on reading data from Accumulo and especially on writing back results.
 We consequently expect TableMult to outperform D4M 
 because TableMult avoids transferring data out of Accumulo for processing. 
