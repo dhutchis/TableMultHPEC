@@ -178,7 +178,7 @@ Several optimization opportunities exist for TableMult as a primitive in larger 
 Given row $\matr{A}$ of starting vertices and graph adjacency matrix $\matr{B}$, 
 suppose we wish to union the vertices reached in two steps from those in A into the vector A via the program
  $\matr{C} = \matr{AB}; \matr{D} = \matr{CB}; \matr{A} \mathrel{\oplus}= \matr{D}$,
-as one way of implementing the calculation $\matr{A} \mathrel{\oplus}= \matr{AB}^2$.
+as one way of calculating $\matr{A} \mathrel{\oplus}= \matr{AB}^2$ via TableMult calls.
 Such calculations are useful for finding vertices reachable in an even number of steps.
 We would save two round trips to disk if we could mark $\matr{C}$ and $\matr{D}$ as 
 ``temporary tables,'' i.e. tables intermediate to an algorithm that should be held in memory 
