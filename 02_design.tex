@@ -163,7 +163,7 @@ TableMult to operate on $\matr{A}$'s transpose $\matr{A^\tr}$.
 
 TableMult uses three iterators placed on a BatchScan of table $\matr{B}$:
 RemoteSourceIterator, TwoTableIterator and RemoteWriteIterator.
-The BatchScanner directs Accumulo to run the iterators on $\matr{B}$'s tablets in parallel.
+A BatchScanner directs Accumulo to run the iterators on $\matr{B}$'s tablets in parallel.
 %The: We place these iterators on  scan itself emits no entries except for a smidgeon of ``monitoring entries'' 
 %that inform the client about TableMult progress. 
 %% Instead, the scan on table $\matr{B}$ reads from table $\matr{A}$T
@@ -226,12 +226,12 @@ using credentials passed from the client through iterator options.
 %% although only users with access to the Accumulo instance may see the password in iterator options.
 
 We also use iterator options to specify row and column subsets, 
-encoding them in a string format similar to that in D4M \cite{kepner2012dynamic}.
+encoding them in a string format similar to that in D4M~\cite{kepner2012dynamic}.
 Row subsets are straightforward since Accumulo uses row-oriented indexing.
 Column subsets can be implemented with filter iterators
 but do not improve performance since Accumulo must read every column from disk.
 We encourage users to maintain a tranpose table
-using strategies similiar to the D4M Schema \cite{kepner2013d4m}
+using strategies similiar to the D4M Schema~\cite{kepner2013d4m}
 for cases requiring column indexing.
 
 Multiplying table subsets is crucial for queued analytics on selected rows.
@@ -254,7 +254,7 @@ Initialize an iterator that emits pairs of entries from the rows' Cartesian prod
 A client defines $\otimes$ by specifying a class 
 that implements a multiply interface.
 %which TwoTableIterator instantiates and calls. 
-For our experiments we implement $\otimes$ as java.math.BigDecimal multiplication
+For our experiments we implement $\otimes$ as java.math.BigDecimal multiplication,
 which guarantees correctness under large or precise real numbers.
 BigDecimal decoding did not noticeably impact performance.
 

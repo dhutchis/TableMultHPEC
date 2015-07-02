@@ -17,20 +17,21 @@ to a compute node. The ability to
 %perform enrichment, algorithms or analytics directly in a database or storage engine
 compute directly in a database can lead to benefits including 
 %can provide benefits such as 
-\emph{selective access}, \emph{data locality} and \emph{infrastructure reuse}. 
+\emph{data locality}, \emph{infrastructure reuse} and \emph{selective access}. 
 
-Apache Accumulo is designed to deliver
-fast answers to queries for data subsets along indexed attributes. 
-% Conducting computation within a database like Accumulo offers several advantages,
-% assuming we can efficiently map it to the database's programming model:
-% %as opposed to YARN or MapReduce directly on HDFS, are 
-The Accumulo server processes typically run on the physical nodes where data is stored and cached.
-Performing computations inside Accumulo can avoid unnecessary network transfer,
+%Apache Accumulo is designed to deliver
+%fast answers to queries for data subsets along indexed attributes. 
+Accumulo administrators commonly create data locality 
+by running server processes on the physical nodes where data is stored and cached.
+Computing within Accumulo takes advantage of this locality 
+by avoiding unnecessary network transfer,
 effectively moving ``compute to data'' like a stored procedure,
 in contrast to client-server models that move ``data to compute''.
-Performing computation in the Accumulo server also reuses its distributed infrastructure
+Performing computation inside Accumulo also reuses its distributed infrastructure
 such as write-ahead logging, fault-tolerant execution, and 
 parallel load balancing of data.
+In particular, Accumulo's infrastructure enables selective access to data along its indexed attributes (rows),
+which enhances the performance of algorithms written with row access patterns.
 
 %cite linear algebra on database data?
 There are a variety of ways to store graphs in Accumulo.  One common schema is
@@ -65,7 +66,8 @@ approach that leverages Accumulo's built-in distributed infrastructure.
 % we never assume a table fits in memory
 % and instead take a streaming approach that distributes with Accumulo's infrastructure.
 
-We are particularly interested in Graphulo for queued analytics, that is, analytics on selected table subsets.  
+We are particularly interested in Graphulo for queued analytics~\cite{Reuther09cloudcomputing}, 
+that is, analytics on selected table subsets.  
 Queued analytics maximally leverage  databases
 by quickly accessing subsets of interest, 
 whereas whole-table analytics may perform better on parallel file systems such as Lustre or Hadoop.

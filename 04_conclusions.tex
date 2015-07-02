@@ -118,7 +118,7 @@ inner product at $P=N$ and outer product at $P=1$:
 \fore({$i = \left( \floor*{\dfrac{(p-1)N}{P}}+1 \right) \col \floor*{\dfrac{p N}{P}}$}){
 \fore($j = 1\col L$){
 %\vspace{4pt}
-\emit{$ \matr{A}(i,k) \otimes \matr{B}(k,j)$}
+{$\matr{C}(i,j) \mathrel{\oplus}= \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}}
 \vspace{\algspace}
 \end{algorithm}
@@ -176,7 +176,8 @@ The latter criterion may be relaxed with decreasing matrix density.
 
 Several optimization opportunities exist for TableMult as a primitive in larger algorithms.
 Given row $\matr{A}$ of starting vertices and graph adjacency matrix $\matr{B}$, 
-suppose we wish to union the vertices reached in two steps from those in A into the vector A via the program
+suppose we wish to union the vertices reached in two steps from those in $\matr{A}$ 
+into $\matr{A}$ via the program
  $\matr{C} = \matr{AB}; \matr{D} = \matr{CB}; \matr{A} \mathrel{\oplus}= \matr{D}$,
 as one way of calculating $\matr{A} \mathrel{\oplus}= \matr{AB}^2$ via TableMult calls.
 Such calculations are useful for finding vertices reachable in an even number of steps.

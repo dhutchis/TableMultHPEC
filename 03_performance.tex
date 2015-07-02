@@ -21,13 +21,16 @@ allowing Accumulo to scan and write to them in parallel.
 %Ideally we would include run our tests on more than two tablets to truly test strong scaling, 
 %but such tests are infeasible given the laptop's capabilities.
 
-We compare Graphulo TableMult performance to D4M as a baseline because 
+We compare Graphulo TableMult performance to D4M~\cite{kepner2012dynamic} as a baseline because 
 a user with one client machine's best alternative is reading input graphs from Accumulo, 
 multiplying them at the client, and inserting the result back into Accumulo.
+%D4M well represents the best of Accumulo client algorithms. has excelled at high scan and ingest rates and has 
 
 D4M stores tables as Associative Array objects in \matlab{}.  
-Because Assoc Array multiplication runs fast in memory, 
-D4M bottlenecks on reading data from Accumulo and especially on writing back results.
+Because Assoc Array multiplication runs fast
+by calling \matlab{}'s in-memory sparse matrix functions, 
+D4M bottlenecks on reading data from Accumulo and especially on writing back results,
+despite its capacity for high speed Accumulo reads and writes~\cite{kepner2014achieving}.
 We consequently expect TableMult to outperform D4M 
 because TableMult avoids transferring data out of Accumulo for processing. 
 
