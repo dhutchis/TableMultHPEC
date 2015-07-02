@@ -79,7 +79,7 @@
 
 % vspace above and below inline algorithms
 \newlength{\algspace}
-\setlength{\algspace}{2pt}
+\setlength{\algspace}{3pt}
 
 % MACROS:
 %\newcommand{\numparties}{\ensuremath{\mathcal{P}}}
@@ -93,7 +93,7 @@
   \@xp\section\@xp*\@xp{\refname}%
   \normalfont\footnotesize\labelsep .5em\relax
   \renewcommand\theenumiv{\arabic{enumiv}}\let\p@enumiv\@empty
-\vspace*{-2pt}% NEW
+%\vspace*{-2pt}% NEW
   \list{\@biblabel{\theenumiv}}{\settowidth\labelwidth{\@biblabel{#1}}%
     \leftmargin\labelwidth \advance\leftmargin\labelsep
     \usecounter{enumiv}}%
@@ -118,12 +118,12 @@
 %% \{vijayg, kepner, bamiller\}@ll.mit.edu}}
 
 \author[D. Hutchison et al.]
-       {Dylan Hutchison,$^{{\dagger}*}\;$ Jeremy Kepner,$^{{\dagger}{\ddagger}{\diamond}*}\;$ Vijay Gadepally,$^{{\dagger}{\ddagger}*}\;$ Adam Fuchs$^+$ \vspace{6pt}
+       {Dylan Hutchison,$^{{\dagger}*}\;$ Jeremy Kepner,$^{{\dagger}{\ddagger}{\diamond}*}\;$ Vijay Gadepally,$^{{\dagger}{\ddagger}*}\;$ Adam Fuchs$^+$ \\
          \\
          $^{\dagger}$MIT Lincoln Laboratory, 
          $^{\ddagger}$MIT Computer Science \& AI Laboratory, \\
          $^{\diamond}$MIT Mathematics Department, 
-         $^+$Sqrrl, Inc. \vspace{-1em}
+         $^+$Sqrrl, Inc. %\vspace{-1em}
        }
 
 %% \author[*,$\dagger$]{Dylan Hutchison\thanks{dhutchis@mit.edu}}
@@ -177,7 +177,7 @@
 \input{02_design.tex}
 \input{03_performance.tex}
 \begin{table*}[tb]
-\vspace{-1.75em}
+%\vspace{-1.75em}
 \centering                                                                                                           
 \caption{Output Table $\matr{C}$ Sizes and Experiment Timings}% plotted in Figure~\ref{fTableMultPerf}}
 \label{tResultsParams}
@@ -213,7 +213,7 @@
 %\item [a] nnz($\matr{C}$) is the number of elements in output table $\matr{C}$ after all partial products sum together.
 %\end{tablenotes}
 \end{threeparttable}
-\vspace{-2.5em}
+%\vspace{-2.5em}
 \end{table*}
 
 \renewcommand{\times}[0]{\stimes}
