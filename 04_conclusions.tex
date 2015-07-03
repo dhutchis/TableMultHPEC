@@ -79,6 +79,19 @@ in place of Scanners and BatchWriters.
 %% for scans and writes to tablets located on the same tablet server.
 %% %though the current version does not do so because standard Scanners and BatchWriters serialize as clients would.
 
+The Knowledge Discovery Toolkit (KDT) distributed-memory Python graph library
+offers sparse matrix multiplication in a similar design as Graphulo's~\cite{bulucc2013high}.
+Both support custom addition, multiplication and filter operators written 
+%along with materialized and on-the-fly custom filters 
+in a high level language.
+They differ in that Graphulo targets the Accumulo infrastructure
+which is IO-bound during matrix multiplication,
+in contrast to the KDT which is compute-bound. %and memory bandwidth-bound.
+Graphulo therefore has less need for code generation techniques on its Java iterator kernels, 
+whereas the KDT uses the SEJITS technique~\cite{catanzaro2009sejits} to translate Python kernels into C++ 
+for callback by KDT's underlying Combinatorial BLAS library~\cite{bulucc2011combinatorial},
+thereby enhancing compute performance at the expense of restricting operator expressiveness to a DSL.
+
 \subsection{Design Alternative: Inner-Outer Product Hybrid}
 
 %bridge inner and outer product
