@@ -14,8 +14,8 @@ and do not rely on tablet server communication
 apart from shuffling partial products of $\matr{C}$ via BatchWriters.
 
 
-Our outer product method could have been implemented in MapReduce %x\cite{dean2008mapreduce} 
-on Hadoop or its successor YARN \cite{vavilapalli2013apache}.
+Our outer product method could have been implemented on Hadoop MapReduce %x\cite{dean2008mapreduce} 
+ or its successor YARN \cite{vavilapalli2013apache}.
 There is a natural analogy from TableMult to MapReduce:
 the map phase scans rows from $\matr{A^\tr}$ and $\matr{B}$
 and generates a list of partial products from TwoTableIterator;
@@ -85,12 +85,14 @@ Both support custom addition, multiplication and filter operators written
 %along with materialized and on-the-fly custom filters 
 in a high level language.
 They differ in that Graphulo targets the Accumulo infrastructure
-which is IO-bound during matrix multiplication,
-in contrast to the KDT which is compute-bound. %and memory bandwidth-bound.
-Graphulo therefore has less need for code generation techniques on its Java iterator kernels, 
-whereas the KDT uses the SEJITS technique~\cite{catanzaro2009sejits} to translate Python kernels into C++ 
+which is IO-bound, %during matrix multiplication,
+in contrast to the KDT which is compute-bound. % or memory bandwidth-bound.
+Graphulo therefore gains less from code generation techniques on its Java iterator kernels, 
+whereas the KDT uses the SEJITS technique~\cite{catanzaro2009sejits} to translate %custom 
+Python kernels into C++ 
 for callback by KDT's underlying Combinatorial BLAS library~\cite{bulucc2011combinatorial},
-thereby enhancing compute performance at the expense of restricting operator expressiveness to a DSL.
+thereby raising performance from compute- to memory bandwidth-bound 
+at the expense of restricting operator expressiveness to a DSL.
 
 \subsection{Design Alternative: Inner-Outer Product Hybrid}
 
