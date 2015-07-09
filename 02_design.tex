@@ -11,6 +11,7 @@ and operations $\oplus$ and $\otimes$ for element-wise addition and multiplicati
 the matrix product $\matr{C} = \matr{A} \,{\oplus}.{\otimes}\, \matr{B} $, or more shortly $\matr{C} = \matr{A}\matr{B}$,
 defines entries of result matrix $\matr{C}$ as 
 \[ \matr{C}(i,j) = \bigoplus_{k=1}^M \matr{A}(i,k) \otimes \matr{B}(k,j) \]
+%\[ \matr{C} = \bigoplus_{k=1}^M \matr{A}(:,k) \matr{B}(k,:) \]
 We call intermediary results of $\otimes$ operations \emph{partial products}.
 
 For the sake of sparse matrices, we only perform $\oplus$ and $\otimes$ when both operands are nonzero,
