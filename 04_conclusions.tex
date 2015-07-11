@@ -20,7 +20,7 @@ There is a natural analogy from TableMult to MapReduce:
 the map phase scans rows from $\matr{A^\tr}$ and $\matr{B}$
 and generates a list of partial products from TwoTableIterator;
 the shuffle phase sends partial products to correct tablets of $\matr{C}$ via BatchWriters;
-the reduce phase sums partial products using Combiners.
+and the reduce phase sums partial products using Combiners.
 Examining the conditions on which MapReduce 
 reading from and writing to Accumulo's RFiles directly
 can outperform Accumulo-only solutions
@@ -119,10 +119,14 @@ outer product emits $M$ times more entries than inner product.
 Is it possible to blend inner and outer product SpGEMM methods,
 choosing a middle point in Figure~\ref{fInnerOuterSpectrum}
 with equal read and write bottlenecks for overall greater performance?
-In the following generalization, 
+In %Fig.~\ref{aHybrid}'s 
+the following generalization, 
 partition parameter $P$ varies behavior between
 inner product at $P=N$ and outer product at $P=1$:
 
+%\SetAlgorithmName{Fig.}{figure}{List of Figures}
+%\stepcounter{figure}
+%\setcounter{AlgoLine}{\value{figure}}
 \removelatexerror
 \begin{algorithm}[H]
 \vspace{\algspace}
@@ -132,10 +136,12 @@ inner product at $P=N$ and outer product at $P=1$:
 \fore($k = 1\col M$){
 \fore({$i = \left( \floor*{\dfrac{(p-1)N}{P}}+1 \right) \col \floor*{\dfrac{p N}{P}}$}){
 \fore($j = 1\col L$){
-%\vspace{4pt}
 {$\matr{C}(i,j) \mathrel{\oplus}= \matr{A}(i,k) \otimes \matr{B}(k,j)$}
 }}}}
 \vspace{\algspace}
+%\vspace{12pt}
+%\caption{Hybrid algorithm: Inner at $P=N$, Outer at $P=1$}
+%\label{aHybrid}
 \end{algorithm}
 
 The hybrid algorithm runs $P$ passes through $\matr{B}$,
@@ -146,15 +152,7 @@ $\matr{A}$ and $\matr{B}$'s  sparsity distribution
 as well as how many positions of $\matr{C}$ the TableMult iterators cache.
 Figure~\ref{fInnerOuterSpectrum}'s center depicts the $P=2$ case.
 
-\begin{figure}[t]
-%\vspace{-4pt}
-\centering
-\includegraphics[width=\linewidth]{InnerOuterSpectrum}
-%\vspace{-14pt}
-\caption{Tradeoffs between Inner and Outer Product}
-\label{fInnerOuterSpectrum}
-%\vspace{-4pt}
-\end{figure}
+
 
 
 A challenge for any hybrid algorithm is mapping it to Accumulo infrastructure.
@@ -178,6 +176,15 @@ while also choosing $P$ large enough so that $\ceil{NL/P}$ entries fit in memory
 (dense matrix worst case), which guarantees complete pre-summing.
 The latter criterion may be relaxed with decreasing matrix density.
 
+\begin{figure}[b]
+%\vspace{-4pt}
+\centering
+\includegraphics[width=\linewidth]{InnerOuterSpectrum}
+%\vspace{-14pt}
+\caption{Tradeoffs between Inner and Outer Product}
+\label{fInnerOuterSpectrum}
+%\vspace{-4pt}
+\end{figure}
 
 \subsection{TableMult in Algorithms}
 %% Several optimization opportunities exist for TableMult as a primitive in larger algorithms.

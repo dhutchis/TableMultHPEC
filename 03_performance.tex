@@ -44,9 +44,12 @@ achievable when multiplying Accumulo tables outside Accumulo's infrastructure.
 We use the Graph500 unpermuted power law graph generator \cite{bader2006designing} 
 to create random input tables,
  %also used in 100M insert/sec paper
-such that the first row has high degree (number of columns) 
+such that both tables' first row have high degree (number of columns) 
 %The generator creates graphs with a power law structure, such that the first vertex has high degree
 and subsequent rows exponentially decrease in degree.
+The common power law structure correlates the input tables, 
+which leads to denser result tables than if we were to permute the input tables
+but does not otherwise affect multiplication behavior.
 The generator takes SCALE and EdgesPerVertex parameters, creating graphs with 2\textsuperscript{SCALE} 
 rows and EdgesPerVertex $\times$ 2\textsuperscript{SCALE} entries.
 We fix EdgesPerVertex to 16 and use SCALE to vary problem size. 
@@ -114,7 +117,7 @@ $\quad$ running with a Combiner implementing $\oplus$.
 \includegraphics[width=\linewidth]{TableMultRate}
 \caption{TableMult Processing Rate vs. Input Table Size}
 \label{fTableMultPerf}
-%\vspace{-4pt}
+%\vspace{-16pt}
 \end{figure}
 
 We show table $\matr{C}$ sizes and experiment timings in Table~\ref{tResultsParams}
