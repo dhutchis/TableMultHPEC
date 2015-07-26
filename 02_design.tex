@@ -16,7 +16,7 @@ We call intermediary results of $\otimes$ operations \emph{partial products}.
 
 For the sake of sparse matrices, we only perform $\oplus$ and $\otimes$ when both operands are nonzero,
 an optimization stemming from requiring that 0 is an additive identity such that $a \oplus 0 = 0 \oplus a = a$,
-and that 0 is a multiplicative annhilator such that $a \otimes 0 = 0 \otimes a = 0$.
+and that 0 is a multiplicative annihilator such that $a \otimes 0 = 0 \otimes a = 0$.
 Without these conditions, zero operands could generate nonzero results that destroy sparsity.
 %Sparse arithmetic requires these conditions, because otherwise zero operands could generate nonzero results.
 
@@ -231,8 +231,8 @@ encoding them in a string format similar to that in D4M~\cite{kepner2012dynamic}
 Row subsets are straightforward since Accumulo uses row-oriented indexing.
 Column subsets can be implemented with filter iterators
 but do not improve performance since Accumulo must read every column from disk.
-We encourage users to maintain a tranpose table
-using strategies similiar to the D4M Schema~\cite{kepner2013d4m}
+We encourage users to maintain a transpose table
+using strategies similar to the D4M Schema~\cite{kepner2013d4m}
 for cases requiring column indexing.
 
 Multiplying table subsets is crucial for queued analytics on selected rows.
@@ -246,7 +246,7 @@ and performs the core operations of the outer product algorithm in three phases:
 \item Align Rows.  Read entries from $\matr{A^\tr}$ and $\matr{B}$ until they advance to a matching row
 or one runs out of entries. We skip non-matching rows 
 since they would multiply with an all-zero row that, by Section~\ref{sMatMul}'s assumptions,
-generate all zero patrial products.
+generate all zero partial products.
 \item Cartesian product. Read both matching rows into an in-memory data structure. 
 Initialize an iterator that emits pairs of entries from the rows' Cartesian product.
 \item Multiply. Pass pairs of entries to $\otimes$ and emit results. 
@@ -276,7 +276,7 @@ A performance concern remains when multiplying a subset of the input tables' row
 that consists of many disjoint ranges, such as one million ``singleton'' ranges spanning one row each.
 It is inefficient to flush the BatchWriter before returning from each seek call, which happens once per 
 disjoint scan range. %, and a known Accumulo issue could even crash the tablet server \cite{ACCUMULO-3710}.
-We accomodate this case by ``transferring seek control'' %over desired row range subsets
+We accommodate this case by ``transferring seek control'' %over desired row range subsets
 from the tablet server to RemoteWriteIterator 
 via the same strategy used in RemoteSourceIterator for seeking within an iterator.
 %by encoding range objects in iterator options. %using the same technique RemoteSourceIterator uses, 
